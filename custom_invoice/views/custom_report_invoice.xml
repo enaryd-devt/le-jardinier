@@ -1,0 +1,216 @@
+<odoo>
+
+    <template id="primetech_invoice_report"
+              inherit_id="account.report_invoice_document">
+
+    <xpath expr="//t[@t-call='web.external_layout']" position="replace">
+        <t t-call="web.external_layout">
+
+            <div class="page" style="font-size:13px; margin:0; padding:0; line-height:1.3;">
+
+                <style>
+                    .page { margin-top:0 !important; padding-top:0 !important; }
+                    .company-info { line-height:1.3; margin-bottom:8px; }
+                    .company-info .line1 { font-size:18px; font-weight:bold; }
+                    .company-info .line2 { font-size:14px; font-weight:bold; }
+                    .company-info .line3,
+                    .company-info .line4,
+                    .company-info .line5 { font-size:13px; font-weight:bold; }
+                    .table-custom { width:100%; border-collapse:collapse; margin-top:8px; font-size:13px; }
+                    .table-custom th,
+                    .table-custom td { border:1px solid black; padding:5px; }
+                    .table-custom th { text-align:center; background:#f2f2f2; font-weight:bold; }
+                    .text-right { text-align:right; }
+                    .signature-box { margin-top:35px; font-weight:bold; font-size:13px; text-align:center; }
+                    .legal-note { margin-top:15px; font-size:12px; text-align:center; }
+                    .client-info { font-size:14px; } /* agrandi pour client */
+                </style>
+
+                <!-- ================= ENTETE ================= -->
+                <div class="company-info">
+                    <div class="line1">FIRST CERAMIC SARL</div>
+                    <div class="line2">VENTES DE CARREAUX GROS ET DETAILS, PLOMBERIES ET SANITAIRES</div>
+                    <div class="line3">TEL: +237673418795</div>
+                    <div class="line4">NIU: M082416995993H</div>
+                    <div class="line5" t-field="o.company_id.name"/>
+                    <br/>
+                </div>
+
+                <!-- ================= TITRE & DATE/HEURE ================= -->
+                <div class="row" style="margin-bottom:8px;">
+                    <div class="col-6">
+                        <strong style="font-size:17px;">
+                            <t t-if="o.move_type == 'out_invoice'">FACTURE CLIENT N° :</t>
+                            <t t-if="o.move_type == 'in_invoice'">FACTURE FOURNISSEUR N° :</t>
+                            <t t-if="o.move_type == 'out_refund'">AVOIR CLIENT N° :</t>
+                            <t t-if="o.move_type == 'in_refund'">AVOIR FOURNISSEUR N° :</t>
+                            <span t-field="o.name"/>
+                        </strong><br/>
+
+                        <!-- DATE + HEURE sur la même ligne -->
+                        <strong>DATE / HEURE :</strong>
+                        <span t-esc="(o.invoice_date or '').strftime('%d/%m/%Y') if o.invoice_date else ''"/>
+                        <span t-esc="o.create_date.strftime(' %H:%M:%S') if o.create_date else ''"/>
+                    </div>
+
+                    <div class="col-6 client-info" style="border:1px solid black; padding:8px;">
+                        <strong>
+                            <t t-if="o.move_type in ('out_invoice','out_refund')">DOIT :</t>
+                            <t t-if="o.move_type in ('in_invoice','in_refund')">FOURNISSEUR :</t>
+                        </strong>
+                        <span t-field="o.partner_id.name"/><br/>
+
+                        <t t-if="o.partner_id.street">
+                            <strong>Adresse :</strong>
+                            <span t-field="o.partner_id.street"/><br/>
+                        </t>
+
+                        <t t-if="o.partner_id.phone">
+                            <strong>Téléphone :</strong>
+                            <span t-field="o.partner_id.phone"/><br/>
+                        </t>
+
+                        <t t-if="o.partner_id.email">
+                            <strong>Email :</strong>
+                            <span t-field="o.partner_id.email"/><br/>
+                        </t>
+
+                        <t t-if="o.partner_id.vat">
+                            <strong>NIU / TVA :</strong>
+                            <span t-field="o.partner_id.vat"/><br/>
+                        </t>
+                    </div>
+                </div>
+
+                <!-- ================= SAISI PAR ================= -->
+                <div style="margin-bottom:6px; font-weight:bold;">
+                    Saisi par : <span t-esc="o.create_uid.name"/>
+                    <t t-if="o.move_type in ('out_invoice','out_refund') and o.invoice_line_ids and o.invoice_line_ids[0].sale_line_ids">
+                         | Source : <span t-esc="o.invoice_line_ids[0].sale_line_ids[0].order_id.name"/>
+                    </t>
+                </div>
+
+                <!-- ================= TABLE DES ARTICLES ================= -->
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>REFERENCE</th>
+                            <th>DESIGNATION</th>
+                            <th>MAGASIN / ENTREPOT</th>
+                            <th>UNITE</th>
+                            <th>QUANTITE</th>
+                            <th>PRIX UNITAIRE</th>
+                            <th>MONTANT</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr t-foreach="o.invoice_line_ids" t-as="line">
+
+                            <td><span t-field="line.product_id.default_code"/></td>
+                            <td><span t-field="line.name"/></td>
+
+                            <!-- MAGASIN / ENTREPOT DYNAMIQUE -->
+                            <td>
+                                <!-- CLIENT -->
+                                <t t-if="o.move_type in ('out_invoice','out_refund')">
+                                    <t t-if="line.sale_line_ids">
+                                        <t t-set="sale_line" t-value="line.sale_line_ids[0]"/>
+                                        <t t-if="sale_line.move_ids">
+                                            <span t-esc="sale_line.move_ids[0].warehouse_id.name"/>
+                                        </t>
+                                    </t>
+                                </t>
+                                <!-- FOURNISSEUR -->
+                                <t t-if="o.move_type in ('in_invoice','in_refund')">
+                                    <t t-if="line.purchase_line_id">
+                                        <t t-set="pol" t-value="line.purchase_line_id"/>
+                                        <t t-if="pol.location_dest_id">
+                                            <t t-set="warehouse" t-value="o.env['stock.warehouse'].search([('view_location_id','parent_of',pol.location_dest_id.id)], limit=1)"/>
+                                            <t t-if="warehouse"><span t-esc="warehouse.name"/></t>
+                                        </t>
+                                    </t>
+                                </t>
+                            </td>
+
+                            <td class="text-right"><span t-field="line.product_uom_id.name"/></td>
+                            <td class="text-center"><span t-esc="round(line.quantity)"/></td>
+                            <td class="text-center"><span t-esc="'{:,.0f}'.format(line.price_unit).replace(',', ' ')"/></td>
+                            <td class="text-right"><span t-field="line.price_subtotal"/></td>
+
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- ================= TOTAL / NOMBRE DE COLIS ================= -->
+                <div style="margin-top:15px; font-size:16px;">
+                    <div class="row">
+                        <div class="col-4 text-left">
+                            TOTAL :
+                            <strong><span t-field="o.amount_total"/></strong>
+                        </div>
+
+                        <div class="col-4 text-center">
+                            REGLEMENT :
+                            <strong><span t-esc="'{:,.0f}'.format(o.amount_total - o.amount_residual).replace(',', ' ')"/></strong>
+
+                        </div>
+
+                        <div class="col-4 text-right">
+                            RESTE A PAYER :
+                            <strong><span t-field="o.amount_residual"/></strong>
+                        </div>
+                    </div>
+
+                    <!-- Nombre de colis uniquement pour facture client -->
+                    <t t-if="o.move_type in ('out_invoice','out_refund')">
+                        <div style="margin-top:6px; font-weight:bold;">
+                            Nombre de colis :
+                            <span t-esc="round(sum(line.quantity for line in o.invoice_line_ids))"/>
+                        </div>
+                    </t>
+                </div>
+
+                <!-- ================= MONTANT EN LETTRES ================= -->
+                <div style="margin-top:8px; font-weight:bold;">
+                    ARRETEZ LE PRESENT DOCUMENT A LA SOMME DE :
+                    <span t-esc="o.currency_id.amount_to_text(o.amount_total)"/> CFA
+                </div>
+
+                <!-- ================= SIGNATURES ================= -->
+                <div class="row signature-box">
+                    <!-- CLIENT -->
+                    <t t-if="o.move_type in ('out_invoice','out_refund')">
+                        <div class="col-3">VISA CAISSIER</div>
+                        <div class="col-3">VISA MAGASINIER</div>
+                        <div class="col-3">VISA VENDEUR</div>
+                        <div class="col-3">VISA CLIENT</div>
+                    </t>
+
+                    <!-- FOURNISSEUR -->
+                    <t t-if="o.move_type in ('in_invoice','in_refund')">
+                        <div class="col-4">VISA COMPTABLE</div>
+                        <div class="col-4">VISA RESPONSABLE</div>
+                        <div class="col-4">VISA FOURNISSEUR</div>
+                    </t>
+                </div>
+
+                <!-- ================= MENTION LEGALE ================= -->
+                <div class="legal-note">
+                    <!-- CLIENT : texte supplémentaire -->
+                    <t t-if="o.move_type in ('out_invoice','out_refund')">
+                        <strong style="font-size:14px;">
+                             Les marchandises achetées ne sont ni retournées ni échangées.<br/>
+                        </strong>
+                    </t>
+                    Imprimée le : <span t-esc="time.strftime('%d/%m/%Y %H:%M')"/>
+                    par : <span t-esc="user.name"/>
+                </div>
+
+            </div>
+
+        </t>
+    </xpath>                
+    </template>
+
+</odoo>
