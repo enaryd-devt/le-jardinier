@@ -1,5 +1,8 @@
-<data id="report_trial_balance_base_custom" inherit_id="account_financial_report.report_trial_balance_base" priority="20">
 
+<odoo>
+
+    <template id="report_trial_balance_base_custom"
+              inherit_id="account_financial_report.report_trial_balance_base">
     <xpath expr="//t[@class='page']" position="replace">
 
         <t class="page">
@@ -348,4 +351,5 @@
 
     </xpath>
 
-</data>
+</template>
+</odoo>

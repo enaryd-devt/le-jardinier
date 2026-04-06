@@ -1,0 +1,234 @@
+/* Containers indépendants */
+.product-button-stock{
+    position:absolute;
+    top:6px;
+    right:6px;
+    z-index:20;
+}
+
+.product-button-inventory{
+    position:absolute;
+    top:36px;
+    right:6px;
+    z-index:20;
+}
+
+/* Bouton rectangle compact */
+.product-stock-button,
+.product-inventory-button{
+    display:flex;
+    align-items:center;
+    justify-content:center; /* centre l'icône au repos */
+    background:rgba(255,255,255,0);
+    border-radius:4px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.15);
+    cursor:pointer;
+    overflow:hidden;
+    width:28px;
+    height:28px;
+    padding:0;
+    transition: all 0.25s ease;
+     
+}
+
+/* Icône */
+.button-icon{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    width:28px;
+    height:28px;
+    flex-shrink:0;
+}
+
+/* Couleurs icône */
+.product-stock-button .button-icon i{
+    color:#22a344;
+    font-size:14px;
+}
+
+.product-inventory-button .button-icon i{
+    color:#2c7be5;
+    font-size:14px;
+}
+
+/* Texte caché */
+.button-text{
+    max-width:0;
+    opacity:0;
+    overflow:hidden;
+    white-space:nowrap;
+    font-size:11px;
+    margin-right:6px;
+    transition:max-width 0.25s ease, opacity 0.25s ease;
+}
+
+/* Hover expansion */
+.product-stock-button:hover,
+.product-inventory-button:hover{
+    width:auto;
+    padding:4px 10px;
+    justify-content:flex-end; /* icône à droite pendant expansion */
+}
+
+/* Texte visible */
+.product-stock-button:hover .button-text,
+.product-inventory-button:hover .button-text{
+    max-width:120px;
+    opacity:1;
+}
+
+/* Couleurs hover */
+.product-stock-button:hover{
+    background:#22c55e;
+}
+
+.product-stock-button:hover .button-icon i,
+.product-stock-button:hover .button-text{
+    color:white;
+}
+
+.product-inventory-button:hover{
+    background:#2c7be5;
+}
+
+.product-inventory-button:hover .button-icon i,
+.product-inventory-button:hover .button-text{
+    color:white;
+}
+
+/* Effet clic stock */
+.product-stock-button:active{
+    background:#16a34a; /* vert plus foncé */
+    transform:scale(0.95);
+}
+
+/* Effet clic inventaire */
+.product-inventory-button:active{
+    background:#1d4ed8; /* bleu plus foncé */
+    transform:scale(0.95);
+}
+
+/*Pour que l'icône reste visible en blanc au clic*/
+.product-stock-button:active .button-icon i,
+.product-stock-button:active .button-text{
+    color:white;
+}
+
+.product-inventory-button:active .button-icon i,
+.product-inventory-button:active .button-text{
+    color:white;
+}
+
+/*empecher le cadre du produit de réagit au clic*/
+.product-stock-button,
+.product-inventory-button{
+    pointer-events:auto;
+    z-index:20; /* au dessus de la card produit */
+}
+
+
+/* Base du badge */
+.product-qty-left-badge{
+    position:absolute;
+    top:6px;
+    left:6px;
+
+    min-width:22px;
+    height:22px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    padding:0 6px;
+
+    font-size:11px;
+    font-weight:600;
+
+    color:white;
+    border-radius:10px;
+
+    box-shadow:0 2px 5px rgba(0,0,0,0.2);
+    transition: all .2s ease;
+    z-index:10; 
+}
+
+/* Stock élevé >10 */
+.product-qty-left-badge.high-stock{
+    background:#22c55e; /* vert */
+}
+
+/* Stock moyen 1-10 */
+.product-qty-left-badge.medium-stock{
+    background:#f97316; /* orange */
+}
+
+/* Stock nul */
+.product-qty-left-badge.zero-stock{
+    background:#ef4444; /* rouge */
+    animation: blink 3s ease-in-out infinite;
+}
+
+/* Stock négatif */
+.product-qty-left-badge.negative-stock{
+    background:#6b7280; /* gris moderne */
+    font-weight:bold;
+    color:white;
+}
+
+/* Animation clignotement pour stock = 0 */
+@keyframes blink{
+    0%, 50%, 100% {opacity:1;}
+    25%, 75% {opacity:0.3;}
+}
+
+.product-qty-left-badge:hover{
+    transform:scale(1.1);
+    box-shadow:0 4px 10px rgba(0,0,0,0.25);
+}
+
+
+/* icone warning */
+.stock-warning-icon{
+    font-size: 14px;        /* icône plus visible */
+    margin-left: 4px;
+    color: #ef4444;         /* rouge plus clair et moderne */
+    opacity: 1;
+    vertical-align: middle;
+    animation: stockWarningPulse 2s ease-in-out infinite;
+}
+
+/* Animation légère pour attirer l'œil */
+@keyframes stockWarningPulse{
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.15);
+    }
+}
+
+/* style du prix */
+.product {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+}
+
+.product-content {
+    flex-grow: 1;
+}
+
+.product-price {
+    font-size: 1rem;
+    line-height: 1.2;
+    font-weight: 600;
+    color: black;
+    text-align: left !important;
+    padding: 0.4rem 0;
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+    text-align: center;
+}

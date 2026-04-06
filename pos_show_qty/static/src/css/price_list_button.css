@@ -1,0 +1,19 @@
+.btn-price-list {
+    margin-left: 8px;
+    padding: 6px 12px;
+    background-color: #2c7be5;
+    color: white;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.btn-price-list:hover {
+    background-color: #1d4ed8;
+}
+
+.btn-price-list:active {
+    background-color: #1e40af;
+    transform: scale(0.95);
+}

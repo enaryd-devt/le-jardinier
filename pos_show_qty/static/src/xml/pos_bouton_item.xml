@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+<t t-inherit="point_of_sale.ProductCard" t-inherit-mode="extension">  
+
+    <xpath expr="//div[contains(@class,'product-information-tag')]" position="replace">
+    </xpath>
+
+    <xpath expr="//article" position="inside">
+
+        <!-- Container bouton Actualiser -->
+        <div class="product-button-container product-button-stock">
+            <div class="product-stock-button"
+                 t-on-click.stop="refreshProductStock"
+                 title="Actualiser les stocks">
+
+                <!-- Icône toujours visible -->
+                <div class="button-icon">
+                    <i class="fa fa-refresh"/>
+                </div>
+
+                <!-- Texte qui apparaît au hover -->
+                <div class="button-text">
+                    recharger le stock
+                </div>
+            </div>
+        </div>
+
+        <!-- Container bouton Inventaire -->
+        <div class="product-button-container product-button-inventory">
+            <div class="product-inventory-button"
+                 t-on-click.stop="props.onProductInfoClick"
+                 title="Inventaire du produit">
+
+                <!-- Icône toujours visible -->
+                <div class="button-icon">
+                    <i class="fa fa-cubes"/>
+                </div>
+
+                <!-- Texte qui apparaît au hover -->
+                <div class="button-text">
+                    Inventaire
+                </div>
+            </div>
+        </div>
+
+    </xpath>
+
+</t>
+
+</templates>

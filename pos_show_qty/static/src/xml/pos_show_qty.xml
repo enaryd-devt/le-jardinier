@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+<t t-inherit="point_of_sale.ProductCard" t-inherit-mode="extension">  
+
+
+     <xpath expr="//article" position="inside">
+
+        <!-- Badge stock disponible -->
+        <div t-if="props.product.qty_available !== undefined"
+             t-att-class="{
+                'product-qty-left-badge': true,
+                'negative-stock': props.product.qty_available &lt; 0,
+                'zero-stock': props.product.qty_available === 0,
+                'medium-stock': props.product.qty_available &gt; 0 &amp;&amp; props.product.qty_available &lt;= 10,
+                'high-stock': props.product.qty_available &gt; 10
+             }"
+             t-att-title="props.product.qty_available &lt;= 0 ? 'Attention ! Stock nul ou négatif' : 'Stock disponible'">
+
+            <t t-esc="props.product.qty_available"/>
+           <t t-if="props.product.qty_available &lt; 0">
+                 <i class="fa fa-exclamation-circle stock-warning-icon"/>
+           </t>
+
+        </div>
+
+    </xpath>
+</t>
+
+</templates>
