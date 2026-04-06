@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!-- This is a template extending the 'point_of_sale.ProductItem' template. -->
+    <t t-name="point_of_sale.low_product_stock"
+       t-inherit="point_of_sale.ProductCard" t-inherit-mode="extension" owl="1">
+        <xpath expr="//div[hasclass('product-img')]" position="inside">
+            <t t-if="this.props.product.alert_tag">
+                <span class="alert_tag position-absolute top-0 start-0 translate-middle"
+                      style=" background-color: #a1dafc; margin-left: 20%; margin-top: 9%; padding: 1px 10px; border-radius: 5px 5px 5px 5px;">
+                    <i class="fa fa-warning text-danger"
+                       style="padding-right: 5px;"/>
+                    <t t-esc="this.props.product.alert_tag"/>
+                </span>
+            </t>
+        </xpath>
+    </t>
+</odoo>

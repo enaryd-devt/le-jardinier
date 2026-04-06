@@ -1,0 +1,58 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* sale
+# 	* stock
+# 	* account
+# 	* point_of_sale
+
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo 18.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: fr\n"
+
+#. module: stock
+#: model:ir.ui.menu,name:stock.menu_stock_root
+msgid "Inventory"
+msgstr "Gestion de Stock"
+
+#. module: account
+#: model:ir.ui.menu,name:account.menu_finance
+msgid "Invoicing"
+msgstr "Finances"
+
+#. module: point_of_sale
+#: model:ir.ui.menu,name:point_of_sale.menu_point_root
+msgid "Point of Sale"
+msgstr "Point de vente"
+
+#. module: contacts
+#: model:ir.ui.menu,name:contacts.menu_contacts
+msgid "Contacts"
+msgstr "Partenaires"
+
+#. module: mail
+#: model:ir.ui.menu,name:mail.menu_root_discuss
+msgid "Discuss"
+msgstr "Appel/Chat"
+
+#. module: hr
+#: model:ir.ui.menu,name:hr.menu_hr_root
+msgid "Employees"
+msgstr "RH"
+
+#. module: base
+msgid "Company"
+msgstr "Agence"
+
+#. module: base
+msgid "Companies"
+msgstr "Agences"
+
+#. module: base
+msgid "Company Name"
+msgstr "Nom de l'agence"
+
+#. module: base
+msgid "Company Details"
+msgstr "Informations de l'agence"

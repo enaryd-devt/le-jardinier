@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<odoo>
+	<record id="groups_restrict_change_price" model="res.groups">
+		<field name="name">Managing Sales Price Change</field>
+	</record>
+</odoo>
