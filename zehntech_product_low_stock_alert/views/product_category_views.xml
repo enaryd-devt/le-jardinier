@@ -1,0 +1,18 @@
+<odoo>
+    <record id="view_product_category_form_low_stock" model="ir.ui.view">
+        <field name="name">product.category.low.stock.alert</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='parent_id']" position="after">
+                <field name="alert_quantity" invisible="not show_alert_quantity"/>   
+                <field name="show_alert_quantity" invisible="1"/> 
+            </xpath>
+        </field>
+    </record>
+</odoo>
+
+
+
+ 
+ 

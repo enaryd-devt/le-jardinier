@@ -2,10 +2,8 @@
 
     <template id="primetech_invoice_report"
               inherit_id="account.report_invoice_document">
-
-    <xpath expr="//div[@name='address_same_as_shipping']/ancestor::div[hasclass('row')]" position="replace">
-    </xpath> 
-              
+	<!--<xpath expr="//div[@name='address_same_as_shipping']/ancestor::div[hasclass('row')]" position="replace">
+	</xpath>              -->
        <!-- Bloc Date et partenaire -->
     <xpath expr="//span[@t-field='o.name']/.." position="replace">
         <!-- Date du jour -->
@@ -35,7 +33,7 @@
         
             <!-- donner la couleur du theme -->
             <div class="mb-2 text-primary" style="margin-top: 30px;">
-                <h4 style="margin-bottom: 0;">
+                <h4 style="margin-bottom: 0; font-size: 33px; font-weight: bold;">
                     <span t-if="o.move_type == 'out_invoice' and o.state == 'posted'">FACTURE</span>
                     <span t-if="o.move_type == 'out_invoice' and o.state == 'draft'">FACTURE PROFORMA</span>
                     <span t-if="o.move_type == 'out_invoice' and o.state == 'cancel'">FACTURE ANNULE</span>
@@ -213,14 +211,14 @@
     <!-- tableau des articles -->
 <xpath expr="//table[@name='invoice_line_table']" position="replace">
     <table class="table table-sm mb-0" name="invoice_line_table" style="width: 100%; border-collapse: collapse; margin: 0 auto;">
-        <thead style="background-color: #0d6efd; color: white; font-weight: bold;">
-            <tr>
-                <th style="text-align: left; border: 1px solid #dee2e6; padding: 4px;">Désignation</th>
-                <th style="text-align: right; border: 1px solid #dee2e6; padding: 4px;">Quantité</th>
-                <th style="text-align: right; border: 1px solid #dee2e6; padding: 4px;">Prix Unitaire</th>
-                <th style="text-align: right; border: 1px solid #dee2e6; padding: 4px;" t-if="display_discount">Remise %</th>
-                <th style="text-align: right; border: 1px solid #dee2e6; padding: 4px;">Taxes</th>
-                <th style="text-align: right; border: 1px solid #dee2e6; padding: 4px;">Montant</th>
+        <thead class="bg-primary">
+            <tr class="border-bottom">
+                <th class="text-start border p-1" style="color: white;">Désignation</th>
+                <th class="text-end border p-1" style="color: white;">Quantité</th>
+                <th class="text-end border p-1" style="color: white;">Prix Unitaire</th>
+                <th class="text-end border p-1" style="color: white;" t-if="display_discount">Remise %</th>
+                <th class="text-end border p-1" style="color: white;">Taxes</th>
+                <th class="text-end border p-1" style="color: white;">Montant</th>
             </tr>
         </thead>
         <tbody>
@@ -434,29 +432,29 @@
 
 
 <!-- VISA des parties -->
-    <xpath expr="//div[@class='overflow-hidden']" position="after">
-        <div class="row mt-5 text-center fw-bold">
-            
-            <!-- FACTURE CLIENT -->
-            <t t-if="o.move_type == 'out_invoice'">
-                <div class="col-4">
-                    <h5><strong>LA DIRECTION</strong></h5>
-                </div>
-                <div class="col-4"/>
-                <div class="col-4">
-                    <h5><strong>LE CLIENT</strong></h5>
-                </div>
-            </t>
-    
-            <!-- FACTURE FOURNISSEUR -->
-            <t t-elif="o.move_type == 'in_invoice'">
-                <div class="col-4">
-                    <h5><strong>LE GESTIONNAIRE</strong></h5>
-                </div>
-            </t>
-    
-        </div>
-    </xpath>
+<xpath expr="//div[@class='overflow-hidden']" position="after">
+    <div class="row mt-5 text-center fw-bold">
+        
+        <!-- FACTURE CLIENT -->
+        <t t-if="o.move_type == 'out_invoice'">
+            <div class="col-4 fw-bold">
+                <h5><strong>LA DIRECTION</strong></h5>
+            </div>
+            <div class="col-4 fw-bold"/>
+            <div class="col-4 fw-bold">
+                <h5><strong>LE CLIENT</strong></h5>
+            </div>
+        </t>
+
+        <!-- FACTURE FOURNISSEUR -->
+        <t t-elif="o.move_type == 'in_invoice'">
+            <div class="col-4 fw-bold">
+                <h5><strong>LE GESTIONNAIRE</strong></h5>
+            </div>
+        </t>
+
+    </div>
+</xpath>
 
 
 <!-- mention imprimé le -->

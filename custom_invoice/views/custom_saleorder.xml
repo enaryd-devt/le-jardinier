@@ -1,0 +1,151 @@
+<odoo>
+    <template id="primetech_saleorder_report" inherit_id="sale.report_saleorder_document">
+
+      <!-- Masquer l'adresse du client -->
+      <xpath expr="//t[@t-set='address']" position="replace"/>
+
+      
+      <!-- Masquer le titre du document (Quotation/Order/Pro-Forma) -->
+      <xpath expr="//t[@t-set='layout_document_title']" position="replace"/>
+
+        <!-- Date du document et numéro -->
+        <xpath expr="//div[@id='informations']" position="replace">
+            <div class="row mb-2">
+                <div class="col-12 text-end">
+                    <h5 class="text-primary">
+                        Date du document :
+                        <span t-field="doc.date_order" t-options='{"widget":"date"}'/>
+                    </h5>
+                </div>
+            </div>
+
+            <div class="mb-3 text-primary" style="margin-top: 30px;">
+                <h4 style="margin-bottom: 0; font-size: 33px; font-weight: bold;">
+                    <span t-if="doc.state in ['draft','sent']"><b>DEVIS / PROFORMA</b></span>
+                    <span t-if="doc.state == 'sale'"><b>BON DE COMMANDE</b></span>
+                    <span t-if="doc.state == 'done'"><b>COMMANDE VALIDÉE</b></span>
+                    <span t-if="doc.state == 'cancel'"><b>COMMANDE ANNULÉE</b></span>
+                    <span t-field="doc.name"><b><t t-esc="doc.name"/></b></span>
+                </h4>
+            </div>
+
+            <!-- Info client -->
+            <div class="row info_partner">
+                <div class="col-5 offset-7">
+                    <div class="p-2">
+                        <p class="mb-1 small text-muted">CLIENT</p>
+                        <p class="h5 mb-1 fw-bold">
+                            <span t-field="doc.partner_id"/>
+                        </p>
+                        <p class="mb-1">
+                            <span t-field="doc.partner_id" t-options='{"widget": "contact", "fields": ["address"], "no_marker": True}'/>
+                        </p>
+                        <p class="mb-0 small" t-if="doc.partner_id.vat">
+                            <strong>NIU :</strong>
+                            <span t-field="doc.partner_id.vat"/>
+                        </p>
+                        <p class="mb-0 small" t-if="doc.partner_id.phone">
+                            <strong>Tél :</strong>
+                            <span t-field="doc.partner_id.phone"/>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </xpath>
+
+        <!-- Tableau d'articles -->
+        <xpath expr="//table[contains(@class,'o_main_table')]" position="replace">
+            <div style="font-size:0.85rem; color:#555; margin-bottom:5px;">
+                <strong>Créé par :</strong> <span t-field="doc.create_uid"/>
+            </div>
+            <table class="table table-sm mb-0" style="width:100%; border-collapse: collapse;">
+                <thead class="bg-primary text-white" style="border: 1px solid white;">
+                    <tr>
+                        <th style="text-align:left; color:white; border: 1px solid white;"><strong>Désignation</strong></th>
+                        <th style="text-align:right; color:white; border: 1px solid white;"><strong>Quantité</strong></th>
+                        <th style="text-align:right; color:white; border: 1px solid white;"><strong>Prix Unitaire</strong></th>
+                        <th t-if="display_discount" style="text-align:right; color:white; border: 1px solid white;"><strong>Remise %</strong></th>
+                        <th style="text-align:right; color:white; border: 1px solid white;"><strong>Taxes</strong></th>
+                        <th style="text-align:right; color:white; border: 1px solid white;"><strong>Montant</strong></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="lines_to_report" t-as="line">
+                        <tr>
+                            <td><span t-field="line.name"/></td>
+                            <td class="text-end">
+                                <span t-field="line.product_uom_qty"/>
+                                <span t-field="line.product_uom"/>
+                            </td>
+                            <td class="text-end"><span t-field="line.price_unit"/></td>
+                            <td t-if="display_discount" class="text-end"><span t-field="line.discount"/></td>
+                            <td class="text-end">
+                                <t t-set="taxes" t-value="', '.join([t.name for t in line.tax_id])"/>
+                                <span t-out="taxes"/>
+                            </td>
+                            <td class="text-end"><span t-field="line.price_subtotal"/></td>
+                        </tr>
+                    </t>
+                </tbody>
+            </table>
+        </xpath>
+
+        <!-- Totaux -->
+        <xpath expr="//div[@name='so_total_summary']" position="replace">
+            <div class="row mt-3">
+                <div class="col-5 ms-auto">
+                    <table class="table table-sm table-borderless" style="width:100%;">
+                        <tr>
+                            <td class="text-primary fw-bold">Total HT</td>
+                            <td class="text-end">
+                                <span t-field="doc.amount_untaxed" t-options='{"widget":"monetary","display_currency":doc.currency_id}'/>
+                            </td>
+                        </tr>
+                        <t t-set="has_taxes" t-value="any(line.tax_id for line in doc.order_line)"/>
+                        <tr t-if="has_taxes">
+                            <td class="text-body">Taxes</td>
+                            <td class="text-end">
+                                <span t-field="doc.amount_tax" t-options='{"widget":"monetary","display_currency":doc.currency_id}'/>
+                            </td>
+                        </tr>
+                        <tr style="font-size:1.2rem;">
+                            <td class="text-primary fw-bold">Total TTC</td>
+                            <td class="text-end fw-bold">
+                                <span t-field="doc.amount_total" t-options='{"widget":"monetary","display_currency":doc.currency_id}'/>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </xpath>
+
+        <!-- Signatures -->
+        <xpath expr="//div[@class='page']" position="inside">
+            <div class="row mt-5 text-center fw-bold" style="margin-top:60px;">
+                <div class="col-4"><h5>LA DIRECTION</h5></div>
+                <div class="col-4"></div>
+                <div class="col-4"><h5>LE CLIENT</h5></div>
+            </div>
+        </xpath>
+
+        <!-- Montant en lettres et numéro de commande -->
+        <xpath expr="//p[@t-if='not is_html_empty(doc.payment_term_id.note)']" position="after">
+            <div style="font-size:0.95rem; font-style:italic; text-align:left; 
+                        padding:10px 15px; border:1px solid #dee2e6; border-radius:5px; 
+                        background-color:#f8f9fa; color:{{ doc.company_id.theme_color or '#0d6efd' }};
+                        margin-top:10px; line-height:1.5;">
+                La commande <strong>"<span t-esc='doc.name'/></strong>" est arrêtée à la somme de  
+                <strong><span t-esc='doc.currency_id.amount_to_text(doc.amount_total)'/></strong>.
+            </div>
+        </xpath>
+
+        <!-- Mention d'impression -->
+        <xpath expr="//p[@t-if='not is_html_empty(doc.payment_term_id.note)']" position="after">
+            <div style="width:100%; text-align:left; font-size:9px; color:#777; margin-top:10px;">
+                Imprimé par <span t-esc="user.name"/> le
+                <span t-esc="datetime.datetime.now().strftime('%d/%m/%Y à %H:%M:%S')"/>
+            </div>
+        </xpath>
+
+    </template>
+</odoo>

@@ -1,0 +1,68 @@
+<odoo>
+
+    <!-- ================================= kanban view ================================== -->
+     
+    <record id="product_template_kanban_view" model="ir.ui.view">
+        <field name="name"> product.template.view.kanban.inherit.low.stocks.product.alert </field>
+        <field name="inherit_id" ref="product.product_template_kanban_view" />
+        <field name="model">product.template</field>
+        <field name="arch" type="xml">
+            <xpath expr="//kanban" position="inside">
+                <field name="alert_quantity"/>
+                <field name="qty_available"/>
+                <field name="color_field" />
+            </xpath>
+            <xpath expr="//t[@t-name='card']" position="replace">
+                <t t-name="card" class="flex-row">
+                    <div class="o_kanban_record border-0"
+                        t-att-style="'background-color:' + record.color_field.raw_value">
+                        <main class="pe-2">
+                            <div class="mb-1">
+                                <div class="d-flex mb-0 h5">
+                                    <field class="me-1" name="is_favorite" widget="boolean_favorite"
+                                        nolabel="1" />
+                                    <field name="name" />
+                                </div>
+                                <span t-if="record.default_code.value"> [ <field name="default_code" />
+                                    ] </span>
+                                <strong t-if="record.product_variant_count.value > 1">
+                                    <field name="product_variant_count" /> Variants </strong>
+                            </div>
+                            <span> Price: <field name="list_price" widget="monetary"
+                                    options="{'currency_field': 'currency_id', 'field_digits': True}" />
+                            </span>
+                            <span>
+                                    Disponible:
+                                    <field name="qty_available"/>
+                            </span>
+                            <field name="product_properties" widget="properties" />
+                        </main>
+                    </div>
+                    <aside>
+                        <field name="image_128" widget="image" alt="Product"
+                            options="{'img_class': 'w-100 object-fit-contain'}" />
+                    </aside>
+                </t>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_template_tree_low_stock" model="ir.ui.view">
+        <field name="name">product.template.tree.low.stock.alert</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view" />
+        <field name="arch" type="xml">
+          
+            <xpath expr="//list" position="inside">
+                <field name="alert_quantity" />
+                <field name="qty_available" />
+            </xpath>
+            <xpath expr="//list" position="attributes">
+                <attribute name="decoration-danger"><![CDATA[
+                    qty_available <= alert_quantity and alert_quantity >= 0
+                ]]></attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

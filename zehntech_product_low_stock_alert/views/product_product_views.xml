@@ -1,0 +1,46 @@
+<odoo>
+    <record id="view_product_form_low_stock" model="ir.ui.view">
+        <field name="name">product.template.low.stock.alert</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='categ_id']" position="after">
+                <field name="alert_quantity"/>
+            </xpath>
+
+        </field>
+    </record>
+
+     <record id="view_product_tree_low_stock" model="ir.ui.view">
+        <field name="name">product.product.tree.low.stock.alert</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_product_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='standard_price']" position="after">
+                <field name="alert_quantity" string="Alert Quantity"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+ 

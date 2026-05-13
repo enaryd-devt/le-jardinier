@@ -1,0 +1,174 @@
+<odoo>
+
+    <template id="primetech_receipt_custom"
+              inherit_id="account.report_payment_receipt_document">
+                 
+            <xpath expr="//t[@t-name='account.report_payment_receipt_document']" position="replace">
+                <t t-name="account.report_payment_receipt_document">
+                    <t t-call="web.external_layout">
+                        <t t-set="o" t-value="o.with_context(lang=lang)"/>
+                        <t t-set="values" t-value="o._get_payment_receipt_report_values()"/>
+
+                        <div class="page">
+
+                            <!-- Conteneur stylisé -->
+                            <div class="border border-primary rounded p-3 bg-white text-dark" style="font-family: Arial, sans-serif; font-size: 12px;">
+
+
+                                <!-- Titre du reçu -->
+                                <h3 class="text-primary fw-bold mb-3">
+                                    <span t-field="o.payment_receipt_title">Payment Receipt</span> : 
+                                    <span t-field="o.name">Brouillon</span>
+
+
+                                </h3>
+
+                            <!-- Informations principales -->
+                                <div class="row mb-3">
+                                
+                                    <!-- BOX 1 : Détails du paiement -->
+                                    <div class="col-6">
+                                        <div class="p-3 h-100 rounded shadow-sm bg-light">
+                                
+                                            <h6 class="fw-bold text-primary mb-3" style="font-size:16px;">Informations du paiement</h6>
+                                
+                                            <!-- Date du paiement -->
+                                            <t t-if="o.date">
+                                                <div class="mb-2 d-flex justify-content-between align-items-center">
+                                                    <span class="fw-bold text-dark" style="font-size:14px;">Date du paiement :</span>
+                                                    <span t-field="o.date" class="text-end" style="font-size:14px;"/>
+                                                </div>
+                                            </t>
+                                
+                                            <!-- Client / Fournisseur -->
+                                            <t t-if="o.partner_type">
+                                                <div class="mb-2 d-flex justify-content-between align-items-center">
+                                                    <span class="fw-bold text-dark" style="font-size:17px;">
+                                                        <t t-if="o.partner_type == 'customer'">Client :</t>
+                                                        <t t-else="">Fournisseur :</t>
+                                                    </span>
+                                                    <span t-field="o.partner_id" class="text-end fw-bold" style="font-size:20px;"/>
+                                                </div>
+                                            </t>
+                                
+                                            <!-- Méthode de paiement -->
+                                            <t t-if="o.payment_method_id">
+                                                <div class="mb-2 d-flex justify-content-between align-items-center">
+                                                    <span class="fw-bold text-dark" style="font-size:14px;">Méthode :</span>
+                                                    <span t-field="o.payment_method_id.name" class="text-end" style="font-size:13px;"/>
+                                                </div>
+                                            </t>
+                                
+                                            <!-- Montant payé -->
+                                            <t t-if="o.amount">
+                                                <div class="mt-3 pt-2 border-top d-flex justify-content-between align-items-center">
+                                                    <span class="fw-bold text-dark" style="font-size:15px;">Montant payé :</span>
+                                                    <span t-field="o.amount" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}" class="fw-bold text-primary" style="font-size:20px;"/>
+                                                </div>
+                                            </t>
+                                
+                                            <!-- Memo -->
+                                            <t t-if="o.memo">
+                                                <div class="mt-3">
+                                                    <span class="fw-bold text-dark" style="font-size:13px;">Mémo :</span><br/>
+                                                    <span t-field="o.memo" class="fst-italic" style="font-size:12px; color:#555;"/>
+                                                </div>
+                                            </t>
+                                
+                                        </div>
+                                    </div>
+                                
+                                
+                                    <!-- BOX : Situation du partenaire -->
+                                    <div class="col-6">
+                                        <div class="p-3 h-100 rounded shadow-sm bg-light text-dark">
+                                    
+                                            <h6 class="fw-bold text-primary mb-3" style="font-size:16px;">Situation du partenaire</h6>
+                                    
+                                            <!-- Solde avant paiement -->
+                                            <div class="mb-3 d-flex justify-content-between align-items-center">
+                                                <span style="font-weight:500; font-size:14px;">Solde avant paiement :</span>
+                                                <span t-esc="-((o.partner_id.credit - o.partner_id.debit) + (o.amount if isinstance(o.amount, (float,int)) else 0.0))" t-options="{'widget':'monetary','display_currency':o.currency_id}" class="fw-bold text-primary" style="font-size:15px;"/>
+                                            </div>
+                                            
+                                            <!-- Solde actuel -->
+                                            <div class="text-left mt-4">
+                                                <div class="fw-semibold text-primary mb-1" style="font-size:16px;">
+                                                    Solde actuel
+                                                </div>
+                                                <div t-esc="-(o.partner_id.credit - o.partner_id.debit)" t-options="{'widget':'monetary','display_currency':o.currency_id}" class="fw-bold text-primary" style="font-size:22px; line-height:1.2; margin-top:4px;"/>
+                                            </div>
+
+
+
+                                    
+                                        </div>
+                                    </div>
+
+                                
+                                </div>
+                                
+
+                                <!-- Signatures -->
+                                <div class="mt-4 px-4" style="width:100%;">
+
+                                    <div class="d-flex justify-content-between align-items-center"
+                                        style="font-weight:600; font-size:15px; margin-top:30px;">
+
+                                        <!-- GAUCHE -->
+                                        <t t-if="o.partner_type == 'customer'">
+                                            <div>
+                                                <span class="text-muted" style="font-size:13px;">
+                                                    Encaissé par :
+                                                </span>
+                                                <span style="margin-left:5px;">
+                                                    <t t-esc="o.create_uid.name"/>
+                                                </span>
+                                            </div>
+
+                                            <!-- DROITE -->
+                                            <div>
+                                                Le Client
+                                            </div>
+                                        </t>
+
+                                        <t t-elif="o.partner_type == 'supplier'">
+                                            <div>
+                                                <span class="text-muted" style="font-size:13px;">
+                                                    Payé par :
+                                                </span>
+                                                <span style="margin-left:5px;">
+                                                    <t t-esc="o.create_uid.name"/>
+                                                </span>
+                                            </div>
+
+                                            <div>
+                                                Le Fournisseur
+                                            </div>
+                                        </t>
+
+                                    </div>
+
+                                </div>
+                                <!-- Mentions finales -->
+                                <div style="margin-top: 0px; font-size: 10px; color:#555; text-align:center;">
+                                    <br/><br/>
+                                    Imprimé par <span t-esc="user.name"/> le 
+                                    <span t-esc="datetime.datetime.now().strftime('%d/%m/%Y à %H:%M:%S')"/>
+                                </div>
+
+                            </div>
+                        
+                
+                        </div>
+                        
+
+                    </t>
+                </t>
+                
+                
+
+            </xpath>
+
+    </template>
+</odoo>
