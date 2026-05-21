@@ -1,52 +1,219 @@
 <odoo>
 
-    <!-- ================================= kanban view ================================== -->
-     
+    <!-- ================================= KANBAN VIEW ================================== -->
+
     <record id="product_template_kanban_view" model="ir.ui.view">
-        <field name="name"> product.template.view.kanban.inherit.low.stocks.product.alert </field>
-        <field name="inherit_id" ref="product.product_template_kanban_view" />
+        <field name="name">product.template.view.kanban.inherit.low.stocks.product.alert</field>
+        <field name="inherit_id" ref="product.product_template_kanban_view"/>
         <field name="model">product.template</field>
         <field name="arch" type="xml">
+
+            <!-- Champs nécessaires -->
             <xpath expr="//kanban" position="inside">
                 <field name="alert_quantity"/>
                 <field name="qty_available"/>
-                <field name="color_field" />
+                <field name="color_field"/>
+                <field name="lot_alert_ids"/>
             </xpath>
+
+            <!-- ================= CARD ================= -->
             <xpath expr="//t[@t-name='card']" position="replace">
+
                 <t t-name="card" class="flex-row">
-                    <div class="o_kanban_record border-0"
+
+                    <div class="o_kanban_record border-0 shadow-sm rounded-3 p-2"
                         t-att-style="'background-color:' + record.color_field.raw_value">
-                        <main class="pe-2">
-                            <div class="mb-1">
-                                <div class="d-flex mb-0 h5">
-                                    <field class="me-1" name="is_favorite" widget="boolean_favorite"
-                                        nolabel="1" />
-                                    <field name="name" />
+
+                        <main class="pe-2 w-100">
+
+                            <!-- ===================================================== -->
+                            <!-- HEADER (NOM + FAVORI + CODE) -->
+                            <!-- ===================================================== -->
+
+                            <div class="mb-2">
+
+                                <div class="d-flex align-items-center mb-1">
+
+                                    <span class="fw-semibold text-dark" style="font-size:15px;">
+                                        <field name="name"/>
+                                    </span>
+
                                 </div>
-                                <span t-if="record.default_code.value"> [ <field name="default_code" />
-                                    ] </span>
-                                <strong t-if="record.product_variant_count.value > 1">
-                                    <field name="product_variant_count" /> Variants </strong>
+
+                                <div class="text-muted" style="font-size:11px;">
+
+                                    <span t-if="record.default_code.value">
+                                        [ <field name="default_code"/> ]
+                                    </span>
+
+                                    <strong t-if="record.product_variant_count.value > 1"
+                                            class="ms-2 text-primary">
+                                        <field name="product_variant_count"/>
+                                        Variants
+                                    </strong>
+
+                                </div>
+
                             </div>
-                            <span> Price: <field name="list_price" widget="monetary"
-                                    options="{'currency_field': 'currency_id', 'field_digits': True}" />
-                            </span>
-                            <span>
-                                    Disponible:
-                                    <field name="qty_available"/>
-                            </span>
-                            <field name="product_properties" widget="properties" />
+
+                            <!-- ===================================================== -->
+                            <!-- PRIX + COÛT -->
+                            <!-- ===================================================== -->
+
+                            <div class="mb-2">
+
+                                <!-- PRIX -->
+                                <div>
+
+                                    <span class="fw-bold text-dark">Prix :</span>
+
+                                    <field name="list_price"
+                                        widget="monetary"
+                                        options="{'currency_field': 'currency_id', 'field_digits': True}"/>
+
+                                </div>
+                                <!-- COÛT -->
+                                <div class="text-muted"
+                                    style="font-size:11px; margin-top:-2px;">
+
+                                    Coût :
+                                    <field name="standard_price"
+                                        widget="monetary"
+                                        options="{'currency_field': 'currency_id'}"/>
+
+                                </div>
+
+                                <!-- MARGE (très petit + bleu léger) -->
+                                <div class="text-primary"
+                                    style="font-size:10px; opacity:0.75; margin-top:-2px;">
+
+                                    Marge :
+                                    <field name="margin_amount"
+                                        widget="monetary"
+                                        options="{'currency_field': 'currency_id'}"/>
+
+                                </div>
+
+
+
+                            </div>
+
+                            <!-- ===================================================== -->
+                            <!-- STOCK -->
+                            <!-- ===================================================== -->
+
+                            <div class="mb-2">
+
+                                <t t-if="record.qty_available.value > record.alert_quantity.value">
+
+                                    <span class="fw-bold text-success">Disponible :</span>
+
+                                    <span class="badge rounded-pill bg-success ms-1 px-2 py-1">
+                                        <field name="qty_available"/>
+                                    </span>
+
+                                </t>
+
+                                <t t-else="">
+
+                                    <span class="fw-bold text-muted">Disponible :</span>
+
+                                    <span class="badge rounded-pill bg-secondary ms-1 px-2 py-1">
+                                        <field name="qty_available"/>
+                                    </span>
+
+                                </t>
+
+                            </div>
+
+                            <!-- ===================================================== -->
+                            <!-- ALERTES EXPIRATION -->
+                            <!-- ===================================================== -->
+
+                            <div t-if="record.lot_alert_ids.raw_value and record.lot_alert_ids.raw_value != '[]'"
+                                class="mt-2">
+
+                                <t t-set="lots"
+                                t-value="JSON.parse(record.lot_alert_ids.raw_value || '[]')"/>
+
+                                <t t-if="lots.length > 0">
+
+                                    <div class="small text-muted" style="font-size:10px;">
+
+                                        <div class="fw-semibold mb-1" style="color:#6c757d;">
+                                            ⚠ Lots proches expiration
+                                        </div>
+
+                                        <t t-foreach="lots" t-as="lot">
+
+                                            <div class="ps-2 mb-1"
+                                                style="border-left:2px solid #d0d0d0; line-height:1.2;">
+
+                                                <div style="color:#6c757d;">
+                                                    Lot :
+                                                    <span class="fw-semibold" t-esc="lot.name"/>
+                                                </div>
+
+                                                <div style="color:#8a8a8a;">
+                                                    Exp :
+                                                    <span t-esc="lot.expiration_date"/>
+                                                    • Qté :
+                                                    <span t-esc="lot.product_qty"/>
+                                                </div>
+
+                                            </div>
+
+                                        </t>
+
+                                    </div>
+
+                                </t>
+
+                            </div>
+
+                            <!-- ===================================================== -->
+                            <!-- PROPERTIES -->
+                            <!-- ===================================================== -->
+
+                            <field name="product_properties" widget="properties"/>
+
                         </main>
+
                     </div>
-                    <aside>
-                        <field name="image_128" widget="image" alt="Product"
-                            options="{'img_class': 'w-100 object-fit-contain'}" />
-                    </aside>
+
+                        <!-- IMAGE -->
+                        <aside class="ms-2">
+
+                            <div class="d-flex align-items-center justify-content-center"
+                                style="
+                                    width: 90px;
+                                    height: 90px;
+                                    border: 1px solid #e0e0e0;
+                                    border-radius: 10px;
+                                    background: #f8f9fa;
+                                    overflow: hidden;
+                                ">
+
+                                <field name="image_128"
+                                    widget="image"
+                                    alt="Product"
+                                    options="{
+                                        'img_class': 'w-100 h-100 object-fit-cover'
+                                    }"/>
+
+                            </div>
+
+                        </aside>
+
                 </t>
+
             </xpath>
+
         </field>
     </record>
 
+    <!-- ================================= LIST VIEW ================================== -->
+    
     <record id="product_template_tree_low_stock" model="ir.ui.view">
         <field name="name">product.template.tree.low.stock.alert</field>
         <field name="model">product.template</field>
