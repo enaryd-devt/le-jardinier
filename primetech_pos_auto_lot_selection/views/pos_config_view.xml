@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Inherit POS configuration form view -->
+    <record id="view_pos_res_config_form_inherit_opr" model="ir.ui.view">
+        <field name="name">res.config.settings.form.inherit.view</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="point_of_sale.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Add the boolean field in the "POS Configuration" tab -->
+            <xpath expr="//block[@id='pos_inventory_section']" position="inside">
+                <setting string="Enable Auto Lot Selection" help="Automatically select lot for products with lots.">
+                    <field name="enable_auto_lot_selection"/>
+                </setting>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>

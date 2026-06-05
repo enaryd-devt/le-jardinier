@@ -94,7 +94,8 @@
 
                                     <span class="fw-bold text-primary"
                                         style="
-                                            font-size:18px;
+                                            font-size:19px;
+                                            font-weight:800;
                                             line-height:1.1;
                                         ">
 
@@ -134,21 +135,23 @@
                                 <!-- MARGE -->
                                 <div class="d-flex align-items-center gap-1 text-primary"
                                     style="
+
                                         font-size:10px;
+                                        font-weight:400;
                                         line-height:1.2;
                                     ">
 
-                                    <span style="font-weight:500;">
-                                        Marge :
+                                    <span style="font-weight:300;">
+                                        Marge prevue :
                                     </span>
 
                                     <span style="
-                                        font-weight:700;
-                                        font-size:12px;
+                                        font-weight:400;
+                                        font-size:10px;
                                         letter-spacing:0.2px;
                                     ">
 
-                                        <t t-esc="margin"/>
+                                        <t t-esc="margin" /> FCFA
 
                                     </span>
 
@@ -271,7 +274,7 @@
                                             color:#5a6b7a;
                                             font-style:italic;">
 
-                                            En commande fournisseur :
+                                            En commande :
 
                                             <span style="
                                                 font-weight:600;
@@ -382,55 +385,252 @@
                         </div>
 
                         <!-- ================= ALERTES EXPIRATION ================= -->
-                        <div t-if="record.lot_alert_ids.raw_value and record.lot_alert_ids.raw_value != '[]'"
-                            class="mt-2 pt-2 border-top">
-    
+                        <div t-if="record.lot_alert_ids.value and record.lot_alert_ids.value != '[]'"
+                            class="mt-1 pt-1 border-top">
+
+                            <!-- JSON -->
+                            <t t-set="raw"
+                            t-value="record.lot_alert_ids.value || '[]'"/>
+
+                            <!-- ALERTES UNIQUEMENT -->
                             <t t-set="lots"
-                            t-value="JSON.parse(record.lot_alert_ids.raw_value || '[]')"/>
+                            t-value="JSON.parse(raw)
+                            .filter(l => l.status === 'warning' || l.status === 'expired')"/>
 
-                            <t t-if="lots.length > 0">
+                            <!-- SI ALERTES -->
+                            <t t-if="lots.length">
 
-                                <div class="fw-semibold text-danger mb-1" style="font-size:10px;">
-                                    ⚠ Alertes d'expiration
+                                <!-- HEADER -->
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+
+                                    <div class="d-flex align-items-center gap-1 mb-1"
+                                        style="
+                                            padding:4px 8px;
+                                            border-radius:10px;
+                                            background:linear-gradient(180deg,#fff8f8,#fffdfd);
+                                            border:1px solid rgba(198,40,40,.08);
+                                            box-shadow:
+                                                0 1px 2px rgba(198,40,40,.04),
+                                                inset 0 1px 0 rgba(255,255,255,.9);
+                                            width:fit-content;
+                                        ">
+
+                                        <!-- icône -->
+                                        <div class="d-flex align-items-center justify-content-center"
+                                            style="
+                                                width:15px;
+                                                height:15px;
+                                                border-radius:50%;
+                                                background:rgba(198,40,40,.08);
+                                                color:#c62828;
+                                                font-size:9px;
+                                                font-weight:700;
+                                                box-shadow:0 1px 2px rgba(198,40,40,.08);
+                                            ">
+
+                                            ⚠
+
+                                        </div>
+
+                                        <!-- texte -->
+                                        <div style="line-height:1;">
+
+                                            <div style="
+                                                font-size:9px;
+                                                font-weight:700;
+                                                color:#b42318;
+                                                letter-spacing:.2px;
+                                            ">
+
+                                                ALERTE EXPIRATION
+
+                                            </div>
+
+                                            <div style="
+                                                font-size:7px;
+                                                color:#c28a8a;
+                                                margin-top:1px;
+                                                letter-spacing:.15px;
+                                            ">
+
+                                                Surveillance automatique des lots
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                    <!-- compteur -->
+                                    <div class="rounded-pill d-flex align-items-center justify-content-center"
+                                        style="
+                                            min-width:16px;
+                                            height:16px;
+                                            background:#ffe8e8;
+                                            color:#c62828;
+                                            font-size:8px;
+                                            font-weight:700;
+                                            padding:0 5px;
+                                            line-height:1;
+                                        "
+                                        t-esc="lots.length"/>
+
                                 </div>
 
+                                <!-- LOTS -->
                                 <t t-foreach="lots" t-as="lot">
 
-                                    <div class="ps-2 mb-1 border-start border-2" style="line-height:1.2;">
+                                    <div class="mb-1 px-2 py-1 rounded-3"
+                                        style="
+                                            background:linear-gradient(180deg,#ffffff,#fafafa);
+                                            border:1px solid #f2f2f2;
+                                            border-left:3px solid
+                                                #{lot.status == 'expired' ? '#dc3545' : '#f0ad4e'};
+                                            box-shadow:
+                                                0 1px 2px rgba(0,0,0,.03);
+                                        ">
 
-                                        <div class="text-muted" style="font-size:10px;">
-                                            Lot :
-                                            <span class="fw-semibold text-dark" t-esc="lot.name"/>
-                                        </div>
+                                        <!-- LIGNE PRINCIPALE -->
+                                        <div class="d-flex flex-wrap align-items-center gap-1"
+                                            style="
+                                                font-size:9.5px;
+                                                line-height:1.2;
+                                                color:#555;
+                                            ">
 
-                                        <div class="text-muted" style="font-size:10px;">
+                                            <!-- LOT -->
+                                            <div class="d-flex align-items-center gap-1">
 
-                                            Exp :
-                                            <span t-esc="lot.expiration_date_display"/>
-                                            • Qté :
-                                            <span class="fw-semibold" t-esc="lot.product_qty"/>
-
-                                            <t t-if="lot.status == 'expired'">
-                                                <span class="badge bg-danger-subtle text-danger ms-1"
-                                                    style="font-size:8px;">
-                                                    PÉRIMÉ
+                                                <span style="
+                                                    color:#9e9e9e;
+                                                    font-weight:500;
+                                                ">
+                                                    Lot
                                                 </span>
-                                            </t>
 
-                                            <t t-elif="lot.status == 'warning'">
-                                                <span class="badge bg-warning-subtle text-warning ms-1"
-                                                    style="font-size:8px;">
-                                                    Bientôt
-                                                </span>
-                                            </t>
+                                                <span class="fw-bold"
+                                                    style="
+                                                        color:#222;
+                                                        letter-spacing:.15px;
+                                                    "
+                                                    t-esc="lot.name"/>
 
-                                        </div>
-
-                                        <t t-if="lot.status != 'expired'">
-                                            <div class="text-muted" style="font-size:8px;">
-                                                Jours restants :
-                                                <span class="fw-semibold" t-esc="lot.days_left"/>
                                             </div>
+
+                                            <span style="opacity:.22;">•</span>
+
+                                            <!-- EXP -->
+                                            <div class="d-flex align-items-center gap-1">
+
+                                                <span style="
+                                                    color:#9e9e9e;
+                                                    font-weight:500;
+                                                ">
+                                                    Exp
+                                                </span>
+
+                                                <span class="fw-semibold"
+                                                    style="color:#dc3545;"
+                                                    t-esc="lot.expiration_date_display"/>
+
+                                            </div>
+
+                                            <span style="opacity:.22;">•</span>
+
+                                            <!-- QTÉ -->
+                                            <div class="d-flex align-items-center gap-1">
+
+                                                <span style="
+                                                    color:#9e9e9e;
+                                                    font-weight:500;
+                                                ">
+                                                    Qté
+                                                </span>
+
+                                                <span class="fw-bold"
+                                                    style="
+                                                        color:#1976d2;
+                                                    "
+                                                    t-esc="lot.product_qty"/>
+
+                                            </div>
+
+                                            <!-- BADGE -->
+                                            <div class="ms-auto">
+
+                                                <!-- PÉRIMÉ -->
+                                                <t t-if="lot.status == 'expired'">
+
+                                                    <span class="rounded-pill"
+                                                        style="
+                                                            background:#ffe7e7;
+                                                            color:#c62828;
+                                                            font-size:7px;
+                                                            font-weight:700;
+                                                            padding:2px 6px;
+                                                            letter-spacing:.25px;
+                                                            text-transform:uppercase;
+                                                        ">
+
+                                                        PÉRIMÉ
+                                                    </span>
+
+                                                </t>
+
+                                                <!-- WARNING -->
+                                                <t t-elif="lot.days_left &lt;= 30 and lot.days_left &gt;= 0">
+
+                                                    <span class="rounded-pill"
+                                                        style="
+                                                            background:#fff5df;
+                                                            color:#d68910;
+                                                            font-size:7px;
+                                                            font-weight:700;
+                                                            padding:2px 6px;
+                                                            letter-spacing:.25px;
+                                                            text-transform:uppercase;
+                                                        ">
+
+                                                        BIENTÔT
+                                                    </span>
+
+                                                </t>
+
+                                            </div>
+
+                                        </div>
+
+                                        <!-- FOOTER -->
+                                        <t t-if="lot.status != 'expired'">
+
+                                            <div class="d-flex align-items-center justify-content-between mt-1"
+                                                style="
+                                                    font-size:7px;
+                                                    color:#9a9a9a;
+                                                    line-height:1;
+                                                ">
+
+                                                <span>
+                                                    Alerte :
+                                                    <span class="fw-semibold"
+                                                        style="color:#777;"
+                                                        t-esc="lot.alert_date"/>
+                                                </span>
+
+                                                <span>
+                                                    Restant :
+                                                    <span class="fw-bold"
+                                                        style="
+                                                            color:#444;
+                                                            font-size:7.5px;
+                                                        "
+                                                        t-esc="lot.days_left"/>
+
+                                                    j
+                                                </span>
+
+                                            </div>
+
                                         </t>
 
                                     </div>

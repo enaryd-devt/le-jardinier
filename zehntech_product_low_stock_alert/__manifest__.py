@@ -11,7 +11,7 @@
     'website': 'https://www.zehntech.com/',
     'support': 'odoo-support@zehntech.com',
     "live_test_url": "https://zehntechodoo.com/app_name=zehntech_product_low_stock_alert/app_version=18.0",
-    'depends': ['stock', 'point_of_sale', 'product'],
+    'depends': ['product', 'stock', 'point_of_sale'],
     'data': [
         'security/ir.model.access.csv',
         'security/security.xml',

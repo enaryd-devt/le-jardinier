@@ -3,6 +3,7 @@ from datetime import datetime
 import json
 
 
+
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
 
@@ -16,6 +17,7 @@ class ProductTemplate(models.Model):
         inverse="_inverse_alert_quantity",
         store=False
     )
+    
 
     # NOTE: éviter de redéclarer qty_available (déjà Odoo)
     # On utilise directement le champ standard
@@ -49,6 +51,7 @@ class ProductTemplate(models.Model):
         compute="_compute_margin_amount",
         store=False
     )
+  
 
     # =====================================================
     # COMPUTE METHODS
@@ -83,59 +86,114 @@ class ProductTemplate(models.Model):
             if template.product_variant_ids:
                 template.product_variant_ids[0].alert_quantity = template.alert_quantity
 
+
     # -----------------------------------------------------
     # LOT EXPIRATION ALERT
     # -----------------------------------------------------
-
+ 
     @api.depends('product_variant_ids')
     def _compute_lot_alert_ids(self):
 
         today = fields.Date.context_today(self)
-        warning_days = 7
+        
 
         for template in self:
 
             alerts = []
 
+            # =====================================================
             # sécurité tracking
+            # =====================================================
+
             if template.tracking != 'lot':
                 template.lot_alert_ids = json.dumps([])
                 continue
 
-            # correction relation lot -> product.product -> template
+            # =====================================================
+            # récupération des lots
+            # =====================================================
+
             lots = self.env['stock.lot'].search([
                 ('product_id.product_tmpl_id', '=', template.id),
                 ('expiration_date', '!=', False),
-                ('product_qty', '>', 0),
             ])
+
+            # garder uniquement les lots avec quantité > 0
+            lots = lots.filtered(lambda l: l.product_qty > 0)
+
+
+            # =====================================================
+            # boucle lots
+            # =====================================================
 
             for lot in lots:
 
                 expiration_date = lot.expiration_date
+                alert_date = lot.alert_date
 
-                # normalisation date
-                if isinstance(expiration_date, datetime):
-                    expiration_date = expiration_date.date()
+                # =====================================================
+                # sécurité
+                # =====================================================
 
                 if not expiration_date:
                     continue
 
+                # normalisation datetime -> date
+                if isinstance(expiration_date, datetime):
+                    expiration_date = expiration_date.date()
+
+                if alert_date and isinstance(alert_date, datetime):
+                    alert_date = alert_date.date()
+
+                # =====================================================
+                # si aucune date d'alerte -> ignorer
+                # =====================================================
+
+                if not alert_date:
+                    continue
+
+                # =====================================================
+                # afficher seulement si date atteinte
+                # =====================================================
+
+                if today < alert_date:
+                    continue
+
+                # =====================================================
+                # calcul jours restants
+                # =====================================================
+
                 days_left = (expiration_date - today).days
+
+                # =====================================================
+                # statut
+                # =====================================================
 
                 if days_left < 0:
                     status = "expired"
-                elif days_left <= warning_days:
-                    status = "warning"
+                    days_display = 0
                 else:
-                    status = "ok"
+                    status = "warning"
+                    days_display = days_left
+
+                # =====================================================
+                # json kanban
+                # =====================================================
 
                 alerts.append({
                     'name': lot.name,
+                    'expiration_date': expiration_date.strftime('%Y-%m-%d'),
                     'expiration_date_display': expiration_date.strftime('%d/%m/%Y'),
+                    'alert_date': alert_date.strftime('%d/%m/%Y'),
                     'product_qty': round(lot.product_qty, 2),
-                    'days_left': days_left,
+                    'days_left': days_display,
                     'status': status,
+                    'is_expired': status == 'expired',
                 })
 
+            # =====================================================
+            # résultat final
+            # =====================================================
+
             template.lot_alert_ids = json.dumps(alerts)
-            print("PRODUCT TEMPLATE LOADED")
+
