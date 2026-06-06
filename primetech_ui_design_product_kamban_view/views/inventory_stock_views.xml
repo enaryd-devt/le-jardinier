@@ -1,0 +1,419 @@
+<odoo>
+    <!-- ================================= KANBAN VIEW ================================== -->
+
+    <record id="product_template_kanban_view" model="ir.ui.view">
+        <field name="name">product.template.view.kanban.inherit.low.stocks.product.alert</field>
+        <field name="inherit_id" ref="product.product_template_kanban_view"/>
+        <field name="model">product.template</field>
+
+        <field name="arch" type="xml">
+
+            <!-- CHAMPS -->
+            <xpath expr="//kanban" position="inside">
+
+                <field name="alert_quantity"/>
+                <field name="qty_available"/>
+                <field name="color_field"/>
+
+            </xpath>
+
+            <!-- CARD -->
+            <xpath expr="//t[@t-name='card']" position="replace">
+
+                <t t-name="card" class="flex-row">
+
+                    <!-- CARD -->
+                    <div class="o_kanban_record border-0 shadow-sm rounded-3 p-2 bg-white w-100"
+
+                        t-att-style="
+                            'border-left:4px solid ' +
+                            (
+                                record.qty_available.value &lt;= record.alert_quantity.value
+                                ? '#dc3545'
+                                : (record.color_field.raw_value || '#875A7B')
+                            )
+                        ">
+
+                        <!-- ================= TOP (INFOS + IMAGE) ================= -->
+                        <div class="d-flex justify-content-between align-items-start">
+
+                            <!-- INFOS -->
+                            <main class="pe-2 flex-grow-1">
+
+                                <!-- HEADER -->
+                                <div class="mb-2">
+
+     
+                                    <div class="text-dark"
+                                        style="font-size:18px; font-weight:700; letter-spacing:0.5px; text-transform:capitalize;">
+                                        <field name="name"/>
+                                    </div>
+
+                                    <div class="text-muted" style="font-size:11px; font-weight:600;">
+
+                                        <span t-if="record.default_code.value">
+                                            [ <field name="default_code"/> ]
+                                        </span>
+
+                                        <strong t-if="record.product_variant_count.value > 1"
+                                                class="ms-2 text-primary">
+
+                                            <field name="product_variant_count"/>
+                                            Variants
+
+                                        </strong>
+
+                                    </div>
+
+                                </div>
+                            <!-- ================= PRIX ================= -->
+                            <div class="mb-2"
+                                style="
+                                    line-height:1.5;
+                                    font-family:'Inter','Segoe UI',sans-serif;
+                                    margin-top:-2px;
+                                ">
+
+                                <!-- CALCUL MARGE -->
+                                <t t-set="price" t-value="record.list_price.raw_value or 0"/>
+                                <t t-set="cost" t-value="record.standard_price.raw_value or 0"/>
+                                <t t-set="margin" t-value="price - cost"/>
+
+                                <!-- PRIX -->
+                                <div class="d-flex align-items-center gap-1" style="margin-bottom:1px;">
+
+                                    <span class="fw-semibold text-muted"
+                                        style="
+                                            font-size:11px;
+                                            letter-spacing:0.2px;
+                                            line-height:1.2;
+                                        ">
+                                        Prix :
+                                    </span>
+
+                                    <span class="fw-bold text-primary"
+                                        style="
+                                            font-size:19px;
+                                            font-weight:800;
+                                            line-height:1.1;
+                                        ">
+
+                                        <field name="list_price"
+                                            widget="monetary"
+                                            options="{'currency_field': 'currency_id'}"/>
+
+                                    </span>
+
+                                </div>
+
+                                <!-- COUT -->
+                                <div class="d-flex align-items-center gap-1 text-muted"
+                                    style="
+                                        font-size:11px;
+                                        margin-bottom:1px;
+                                        line-height:1.2;
+                                    ">
+
+                                    <span style="font-weight:500;">
+                                        Coût :
+                                    </span>
+
+                                    <span style="
+                                        font-weight:600;
+                                        font-size:12px;
+                                    ">
+
+                                        <field name="standard_price"
+                                            widget="monetary"
+                                            options="{'currency_field': 'currency_id'}"/>
+
+                                    </span>
+
+                                </div>
+
+                                <!-- MARGE -->
+                                <div class="d-flex align-items-center gap-1 text-primary"
+                                    style="
+
+                                        font-size:10px;
+                                        font-weight:400;
+                                        line-height:1.2;
+                                    ">
+
+                                    <span style="font-weight:300;">
+                                        Marge prevue :
+                                    </span>
+
+                                    <span style="
+                                        font-weight:400;
+                                        font-size:10px;
+                                        letter-spacing:0.2px;
+                                    ">
+
+                                        <t t-esc="margin" /> FCFA
+
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                            </main>
+
+                            <!-- IMAGE -->
+                            <aside class="ms-2 flex-shrink-0">
+
+                                <div class="border rounded-3 bg-light overflow-hidden"
+                                    style="width:90px;height:90px;">
+
+                                    <field name="image_128"
+                                        widget="image"
+                                        options="{'img_class': 'w-100 h-100 object-fit-cover'}"/>
+
+                                </div>
+
+                            </aside>
+
+                        </div>
+                        <!-- ================= STOCK BOX ================= -->
+
+                        <style>
+                            @keyframes stockBlink {
+                                0% {
+                                    background-color:#fff5f5;
+                                    box-shadow:0 0 0 rgba(220,53,69,0);
+                                }
+
+                                50% {
+                                    background-color:#ffe5e5;
+                                    box-shadow:0 0 14px rgba(220,53,69,0.20);
+                                }
+
+                                100% {
+                                    background-color:#fff5f5;
+                                    box-shadow:0 0 0 rgba(220,53,69,0);
+                                }
+                            }
+                        </style>
+
+                        <!-- ================= VALEURS ================= -->
+                        <t t-set="qty" t-value="record.qty_available.raw_value"/>
+                        <t t-set="alert" t-value="record.alert_quantity.raw_value"/>
+                        <t t-set="forecast" t-value="record.virtual_available.raw_value"/>
+
+                        <!-- UOM SAFE -->
+                        <t t-set="uom" t-value="record.uom_id and record.uom_id.display_name or ''"/>
+
+                        <!-- ================= STATUTS ================= -->
+                        <t t-set="is_out" t-value="qty == 0"/>
+                        <t t-set="is_alert" t-value="qty &gt; 0 and qty &lt;= alert"/>
+
+                        <!-- ================= CALCULS STOCK ================= -->
+                        <t t-set="diff" t-value="forecast - qty"/>
+                        <t t-set="in_commande" t-value="diff &gt; 0 and diff or 0"/>
+                        <t t-set="reserve" t-value="diff &lt; 0 and (-diff) or 0"/>
+
+                        <!-- ================= STYLE GLOBAL ================= -->
+                        <t t-set="global_class"
+                            t-value="is_out and 'text-danger'
+                                        or (is_alert and 'text-warning'
+                                        or 'text-success')"/>
+
+                        <!-- ================= BOX ================= -->
+                        <div class="mt-1 pt-1 px-2 pb-2"
+                            t-att-style="
+                                is_out and
+                                'border:1px solid rgba(220,53,69,0.25);
+                                border-radius:10px;
+                                background:#fff5f5;
+                                animation:stockBlink 1.4s ease-in-out infinite;'
+                                or
+                                'border:1px solid rgba(0,0,0,0.06);
+                                border-radius:10px;
+                                background:linear-gradient(180deg,#ffffff,#fafafa);'
+                            ">
+
+                            <!-- ================= TITRE ================= -->
+                            <div class="mb-1 fw-semibold text-muted"
+                                style="font-size:11px; letter-spacing:0.5px;">
+                                STOCK
+                            </div>
+
+                            <!-- ================= TOP ROW ================= -->
+                            <div class="d-flex align-items-start justify-content-between"
+                                style="font-family:'Inter','Segoe UI',sans-serif;">
+
+                                <!-- ================= PREVU ================= -->
+                                <div class="d-flex flex-column gap-0"
+                                    t-att-class="global_class">
+
+                                    <div class="d-flex align-items-center gap-1">
+
+                                        <span style="font-size:12px; font-weight:500;">
+                                            Prévu :
+                                        </span>
+
+                                        <span style="font-size:14px; font-weight:600;"
+                                            t-att-class="global_class">
+                                            <field name="virtual_available"/>
+                                        </span>
+
+                                        <span style="font-size:11px; opacity:0.8;">
+                                            <t t-esc="uom"/>
+                                        </span>
+
+                                    </div>
+
+                                    <!-- EN COMMANDE -->
+                                    <t t-if="in_commande &gt; 0">
+
+                                        <div style="
+                                            font-size:10px;
+                                            margin-top:2px;
+                                            color:#5a6b7a;
+                                            font-style:italic;">
+
+                                            En commande :
+
+                                            <span style="
+                                                font-weight:600;
+                                                color:#2f6fed;">
+
+                                                <t t-esc="in_commande"/>
+
+                                            </span>
+
+                                        </div>
+
+                                    </t>
+
+                                </div>
+
+                                <!-- ================= SEPARATEUR ================= -->
+                                <span style="opacity:0.2;">|</span>
+
+                                <!-- ================= DISPONIBLE ================= -->
+                                <div class="d-flex flex-column gap-0"
+                                    t-att-class="global_class">
+
+                                    <div class="d-flex align-items-center gap-1">
+
+                                        <span style="font-size:12px; font-weight:500;">
+                                            Disponible :
+                                        </span>
+
+                                        <span style="font-size:15px; font-weight:700;"
+                                            t-att-class="global_class">
+
+                                            <field name="qty_available"/>
+
+                                        </span>
+
+                                        <span style="font-size:11px; opacity:0.8;">
+                                            <t t-esc="uom"/>
+                                        </span>
+
+                                        <!-- ================= BADGE RUPTURE ================= -->
+                                        <t t-if="is_out">
+
+                                            <span class="ms-1"
+                                                style="
+                                                    font-size:10px;
+                                                    padding:2px 6px;
+                                                    border-radius:6px;
+                                                    background:#ffe5e5;
+                                                    color:#b02a37;
+                                                    font-weight:600;
+                                                    animation:stockBlink 1.2s infinite;
+                                                ">
+
+                                                RUPTURE
+
+                                            </span>
+
+                                        </t>
+
+                                        <!-- ================= BADGE ALERTE ================= -->
+                                        <t t-elif="is_alert">
+
+                                            <span class="ms-1"
+                                                style="
+                                                    font-size:10px;
+                                                    padding:2px 6px;
+                                                    border-radius:6px;
+                                                    background:#fff3cd;
+                                                    color:#b08900;
+                                                    font-weight:600;
+                                                ">
+
+                                                ALERTE
+
+                                            </span>
+
+                                        </t>
+
+                                    </div>
+
+                                    <!-- ================= RESERVE ================= -->
+                                    <t t-if="reserve &gt; 0">
+
+                                        <div style="
+                                            font-size:10px;
+                                            margin-top:2px;
+                                            color:#5a6b7a;
+                                            font-style:italic;">
+
+                                            Réservation client :
+
+                                            <span style="
+                                                font-weight:600;
+                                                color:#ff8a00;">
+
+                                                <t t-esc="reserve"/>
+
+                                            </span>
+
+                                        </div>
+
+                                    </t>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <!-- PROPERTIES -->
+                        <div class="mt-2">
+                            <field name="product_properties" widget="properties"/>
+                        </div>
+
+                    </div>
+
+                </t>
+
+            </xpath>
+
+        </field>
+    </record>
+    <!-- ================================= LIST VIEW ================================== -->
+    
+    <record id="product_template_tree_low_stock" model="ir.ui.view">
+        <field name="name">product.template.tree.low.stock.alert</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view" />
+        <field name="arch" type="xml">
+          
+            <xpath expr="//list" position="inside">
+                <field name="alert_quantity" />
+                <field name="qty_available" />
+            </xpath>
+            <xpath expr="//list" position="attributes">
+                <attribute name="decoration-danger"><![CDATA[
+                    qty_available <= alert_quantity and alert_quantity >= 0
+                ]]></attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
