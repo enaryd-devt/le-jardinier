@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Prevent Negative Stock in POS - Odoo Module</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+
+  <!-- Header -->
+  <header class="bg-red-600 text-white py-8 shadow-md">
+    <div class="max-w-5xl mx-auto text-center">
+      <h1 class="text-3xl font-bold">Prevent Negative Stock in POS</h1>
+      <p class="mt-2 text-lg">Ensure inventory accuracy by blocking POS orders with insufficient stock.</p>
+    </div>
+  </header>
+
+  <!-- Features -->
+  <section class="py-12 max-w-5xl mx-auto px-4">
+    <h2 class="text-2xl font-semibold mb-6 flex items-center"><i data-feather="check-circle" class="mr-2 text-green-600"></i>Features</h2>
+    <ul class="space-y-3 text-lg list-disc list-inside">
+      <li>Blocks POS orders for out-of-stock items</li>
+      <li>Displays user-friendly warning messages</li>
+      <li>Works seamlessly in real-time</li>
+      <li>Keeps inventory accurate and prevents overselling</li>
+    </ul>
+  </section>
+
+  <!-- Demo -->
+  <section class="bg-gray-100 py-12 px-4">
+    <div class="max-w-5xl mx-auto">
+      <h2 class="text-2xl font-semibold mb-6 flex items-center"><i data-feather="play-circle" class="mr-2 text-red-500"></i>Demo</h2>
+      <p class="text-lg">Watch how the module works in action:</p>
+      <div class="mt-6 bg-white shadow rounded-lg overflow-hidden">
+        <div class="aspect-w-16 aspect-h-9">
+          <iframe class="w-full h-96" src="https://www.youtube.com/embed/your-demo-link" title="Module Demo" frameborder="0" allowfullscreen></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Installation -->
+  <section class="py-12 max-w-5xl mx-auto px-4">
+    <h2 class="text-2xl font-semibold mb-6 flex items-center"><i data-feather="download" class="mr-2 text-blue-600"></i>Installation</h2>
+    
+    <h3 class="font-bold mt-4">For Odoo Community/Enterprise (On-Premise)</h3>
+    <ol class="list-decimal list-inside space-y-2 ml-4">
+      <li>Place the module in your Odoo custom addons folder</li>
+      <li>Update app list and install the module</li>
+      <li>Use POS as usual – the system will block negative stock orders</li>
+    </ol>
+
+    <h3 class="font-bold mt-6">For Odoo Online (SaaS)</h3>
+    <ol class="list-decimal list-inside space-y-2 ml-4">
+      <li>Download the module zip file</li>
+      <li>Enable Debug Mode (Add <code>?debug=1</code> to your URL)</li>
+      <li>Go to Apps menu → Click <strong>"Import Module"</strong></li>
+      <li>Select the downloaded zip file and upload</li>
+      <li>Click "Install" and start using the module</li>
+    </ol>
+
+    <h3 class="font-bold mt-6">For Odoo.sh</h3>
+    <ol class="list-decimal list-inside space-y-2 ml-4">
+      <li>Connect to your Odoo.sh repository via Git</li>
+      <li>Add the module to your custom addons directory</li>
+      <li>Push changes to your repository</li>
+      <li>Update app list and install the module</li>
+      <li>Use POS as usual – the system will block negative stock orders</li>
+    </ol>
+  </section>
+
+  <!-- Configuration -->
+  <section class="bg-gray-100 py-12 px-4">
+    <div class="max-w-5xl mx-auto">
+      <h2 class="text-2xl font-semibold mb-6 flex items-center"><i data-feather="settings" class="mr-2 text-yellow-600"></i>Configuration</h2>
+      <ul class="list-disc list-inside space-y-2 text-lg">
+        <li>No additional configuration required</li>
+        <li>Works automatically for all consumable products</li>
+        <li>Affects POS orders only (not Sales Orders)</li>
+        <li>Checks real-time stock availability including items in cart</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Requirements -->
+  <section class="py-12 max-w-5xl mx-auto px-4">
+    <h2 class="text-2xl font-semibold mb-6 flex items-center"><i data-feather="cpu" class="mr-2 text-purple-600"></i>Requirements</h2>
+    <ul class="list-disc list-inside text-lg space-y-2">
+      <li>Odoo 16.0+</li>
+      <li>Odoo 17.0+</li>
+      <li>Odoo 18.0+</li>
+      <li>Point of Sale module installed</li>
+      <li>Stock/Inventory module installed</li>
+    </ul>
+  </section>
+
+  <!-- Compatibility -->
+  <section class="bg-gray-100 py-12 px-4">
+    <div class="max-w-5xl mx-auto">
+      <h2 class="text-2xl font-semibold mb-6 flex items-center"><i data-feather="smartphone" class="mr-2 text-green-600"></i>Compatibility</h2>
+      <p class="text-lg">Fully compatible with:</p>
+      <ul class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-center">
+        <li class="bg-white shadow p-4 rounded-lg">Odoo Online (SaaS)</li>
+        <li class="bg-white shadow p-4 rounded-lg">Odoo.sh</li>
+        <li class="bg-white shadow p-4 rounded-lg">Odoo Community</li>
+        <li class="bg-white shadow p-4 rounded-lg">Odoo Enterprise</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-red-600 text-white py-6 text-center mt-12">
+    <p>&copy; 2025 Prevent Negative Stock in POS | All Rights Reserved</p>
+  </footer>
+
+  <script>feather.replace()</script>
+</body>
+</html>
