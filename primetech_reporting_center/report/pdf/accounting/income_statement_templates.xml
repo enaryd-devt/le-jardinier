@@ -1,0 +1,72 @@
+<?xml version='1.0' encoding='utf-8'?>
+<odoo>
+  <template id="income_statement_template">
+    <t t-call="web.html_container">
+      <t t-call="web.external_layout">
+        <div style="font-family:Arial; font-size:11px; padding:15px;">
+          <div style="text-align:center; margin-bottom:15px;">
+            <h2>
+
+                                COMPTE DE RESULTAT
+
+                            </h2>
+            <div>
+
+                                DU
+
+                                <strong><t t-esc="date_from"/></strong>
+
+                                AU
+
+                                <strong><t t-esc="date_to"/></strong>
+
+                            </div>
+            <div>
+
+                                Généré le
+                                <t t-esc="generated_at"/>
+
+                            </div>
+          </div>
+          <table style="width:100%; border-collapse:collapse;">
+            <thead>
+              <tr style="background:#E6E6E6;">
+                <th style="border:1px solid #999; padding:4px;">
+                                        REF
+                                    </th>
+                <th style="border:1px solid #999; padding:4px;">
+                                        LIBELLES
+                                    </th>
+                <th style="border:1px solid #999; padding:4px;">
+                                    EXERCICE <t t-esc="data['year_n']"/>
+                                    </th>
+                <th style="border:1px solid #999; padding:4px;">
+                                        EXERCICE <t t-esc="data['year_n1']"/>
+                                    </th>
+              </tr>
+            </thead>
+            <tbody>
+              <t t-foreach="data['lines']" t-as="line">
+                <tr t-att-style="'background:#D9D9D9;font-weight:bold;' if line['line_type'] == 'subtotal' else ''">
+                  <td style="border:1px solid #999; padding:4px;">
+                    <t t-esc="line['ref']"/>
+                  </td>
+                  <td style="border:1px solid #999; padding:4px;">
+                    <t t-esc="line['label']"/>
+                  </td>
+                  <td style="border:1px solid #999; padding:4px; text-align:right;">
+                    <t t-esc="'{:,.0f}'.format(line['amount'])"/>
+                  </td>
+                  <td style="border:1px solid #999; padding:4px; text-align:right;">
+                    <t t-esc="'{:,.0f}'.format(line.get('amount_n1',0.0))"/>
+                  </td>
+                </tr>
+              </t>
+            </tbody>
+          </table>
+          <br/>
+        </div>
+      </t>
+    </t>
+  </template>
+</odoo>
