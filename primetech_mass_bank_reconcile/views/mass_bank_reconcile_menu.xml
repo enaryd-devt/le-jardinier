@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_mass_bank_reconcile_logs" model="ir.actions.act_window">
+        <field name="name">Mass Reconciliation Logs</field>
+        <field name="res_model">primetech.mass.bank.reconcile.log</field>
+        <field name="view_mode">list,form</field>
+        <field name="groups_id" eval="[(4, ref('group_mass_bank_reconcile_manager'))]"/>
+    </record>
+    <menuitem id="menu_mass_bank_reconcile_logs" name="Mass Reconciliation Logs"
+              parent="account.menu_finance_configuration" action="action_mass_bank_reconcile_logs"
+              groups="group_mass_bank_reconcile_manager" sequence="95"/>
+</odoo>

@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_mass_bank_reconcile_wizard,Mass bank reconciliation wizard,model_primetech_mass_bank_reconcile_wizard,group_mass_bank_reconcile_user,1,1,1,1
+access_mass_bank_reconcile_log_user,Mass reconciliation log user,model_primetech_mass_bank_reconcile_log,group_mass_bank_reconcile_user,1,0,1,0
+access_mass_bank_reconcile_log_manager,Mass reconciliation log manager,model_primetech_mass_bank_reconcile_log,group_mass_bank_reconcile_manager,1,0,1,0

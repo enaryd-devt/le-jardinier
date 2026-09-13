@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_mass_bank_reconcile_wizard_form" model="ir.ui.view">
+        <field name="name">primetech.mass.bank.reconcile.wizard.form</field>
+        <field name="model">primetech.mass.bank.reconcile.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Mass Bank Reconciliation">
+                <sheet>
+                    <div class="oe_title"><h1>Mass Bank Reconciliation</h1></div>
+                    <group>
+                        <group>
+                            <field name="journal_id"/>
+                            <field name="currency_id" invisible="1"/>
+
+                        </group>
+                    </group>
+                    <group string="Manual counterpart">
+                        <field name="manual_account_id"
+                               domain="[('deprecated', '=', False),
+                                        ('account_type', 'not in',
+                                         ['asset_receivable', 'liability_payable', 'off_balance'])]"
+                               options="{'no_create': True}"
+                               placeholder="Select an account from the chart of accounts..."/>
+                        <field name="label"/>
+                        <field name="analytic_distribution" widget="analytic_distribution"/>
+                        <field name="auto_validate"/>
+                        <field name="notes" placeholder="Optional audit note..."/>
+                    </group>
+                    <group string="Automatic matching">
+                        <group>
+                            <field name="match_partner"/>
+                            <field name="matching_partner_id"
+                                   invisible="not match_partner"
+                                   required="match_partner"
+                                   options="{'no_create': True}"
+                                   placeholder="Select the partner to apply..."/>
+                        </group>
+
+                    </group>
+                    <separator string="Selected transactions"/>
+                    <field name="statement_line_ids" readonly="1">
+                        <list create="0" delete="0" edit="0">
+                            <field name="date"/>
+                            <field name="ref" optional="show"/>
+                            <field name="payment_ref"/>
+                            <field name="partner_id"/>
+                            <field name="amount"/>
+                            <field name="foreign_currency_id" optional="show"/>
+                            <field name="is_reconciled"/>
+                        </list>
+                    </field>
+                </sheet>
+                <footer>
+                    <button name="action_mass_reconcile" type="object" string="Validate and Reconcile" class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

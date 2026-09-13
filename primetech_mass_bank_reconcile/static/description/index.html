@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>PrimeTech Mass Bank Reconciliation</title>
+</head>
+<body>
+    <section class="oe_container">
+        <div class="oe_row oe_spaced">
+            <h2 class="oe_slogan">PrimeTech Mass Bank Reconciliation</h2>
+            <h3 class="oe_slogan">
+                Apply one counterpart account to compatible bank transactions in Odoo 18
+            </h3>
+            <p class="oe_mt32">
+                Process large selections of unreconciled bank transactions while preserving
+                a separate, balanced journal entry and a complete audit trail for every line.
+            </p>
+        </div>
+    </section>
+
+    <section class="oe_container oe_dark">
+        <div class="oe_row oe_spaced">
+            <h3>Key features</h3>
+            <ul>
+                <li>Contextual mass-reconciliation action for bank transactions.</li>
+                <li>Counterpart account, label, partner, and analytic distribution support.</li>
+                <li>
+                    Automatic matching by partner, label, date, and amount, restricted to
+                    compatible company, journal, currency, and debit/credit direction.
+                </li>
+                <li>Multi-company access checks and dedicated user and manager roles.</li>
+                <li>Persistent execution logs for accounting auditability.</li>
+                <li>Atomic processing without manual database commits.</li>
+            </ul>
+        </div>
+    </section>
+
+    <section class="oe_container">
+        <div class="oe_row oe_spaced">
+            <h3>Usage</h3>
+            <ol>
+                <li>Select one or more bank transactions.</li>
+                <li>Choose <strong>Actions &gt; Mass Reconcile</strong>.</li>
+                <li>
+                    Optionally gather matching transactions using the configurable criteria.
+                </li>
+                <li>Select the manual counterpart account and review the transaction preview.</li>
+                <li>Click <strong>Validate and Reconcile</strong>.</li>
+            </ol>
+        </div>
+    </section>
+
+    <section class="oe_container oe_dark">
+        <div class="oe_row oe_spaced">
+            <h3>Accounting safety</h3>
+            <p>
+                The module processes each statement transaction independently through its
+                existing balanced move. It does not reconcile unrelated selected debits and
+                credits against one another. Transactions must be posted, unreconciled, and
+                compatible before processing.
+            </p>
+        </div>
+    </section>
+</body>
+</html>
