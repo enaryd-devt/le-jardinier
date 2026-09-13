@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- ===================================================== -->
+    <!-- PRIME TECH POS PRODUCT CARD ENHANCEMENT -->
+    <!-- ===================================================== -->
+
+    <t t-inherit="point_of_sale.ProductCard"
+       t-inherit-mode="extension">
+
+        <!-- ================================================= -->
+        <!-- HIDE NATIVE INFO BUTTON -->
+        <!-- ================================================= -->
+
+        <xpath expr="//div[contains(@class,'product-information-tag')]" position="replace">
+        </xpath>
+
+        <!-- ================================================= -->
+        <!-- PRODUCT CARD -->
+        <!-- ================================================= -->
+
+        <xpath expr="//article"
+               position="inside">
+
+            <!-- ============================================= -->
+            <!-- STOCK BADGE -->
+            <!-- ============================================= -->
+            <div t-if="qtyAvailable != null"
+                t-on-mouseenter="onStockEnter"
+                t-on-mouseleave="onStockLeave"
+                t-att-class="{
+                    'pt-stock-badge': true,
+                    'pt-stock-danger': isOutOfStock,
+                    'pt-stock-warning': isLowStock,
+                    'pt-stock-success': qtyAvailable > 5
+                }">
+
+                <t t-if="!state.stockHovered">
+
+                    <span class="pt-stock-qty">
+                        <t t-esc="qtyAvailable || 0"/>
+                    </span>
+
+                </t>
+
+                <t t-else="">
+
+                    <button class="pt-stock-refresh-btn"
+                            t-on-click="refreshStock">
+
+                        <i class="fa fa-refresh"/>
+
+                    </button>
+
+                </t>
+
+            </div>
+
+            <!-- ============================================= -->
+            <!-- PRICE -->
+            <!-- ============================================= -->
+
+            <div class="pt-price-badge">
+
+                <i class="fa fa-tag"/>
+
+                <span>
+                    <t t-esc="formattedPrice"/>
+                </span>
+
+            </div>
+
+        </xpath>
+
+    </t>
+
+</templates>
