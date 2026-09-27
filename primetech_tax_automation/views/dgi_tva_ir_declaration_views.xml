@@ -224,9 +224,6 @@
         <field name="action" ref="action_dgi_tva_ir_declaration"/>
         <field name="sequence">10</field>
     </record>
-    <record id="menu_dgi_tva_ir_declaration" model="ir.ui.menu">
-        <field name="active">False</field>
-    </record>
     <record id="menu_tax_dashboard" model="ir.ui.menu">
         <field name="active">True</field>
     </record>
