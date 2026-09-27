@@ -1,0 +1,116 @@
+# Translation of Odoo Server.
+#. module: primetech_tax_automation
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0\\n"
+"Language: en_US\\n"
+"Content-Type: text/plain; charset=UTF-8\\n"
+"Content-Transfer-Encoding: 8bit\\n"
+
+#. module: primetech_tax_automation
+msgid "Fiscalité"
+msgstr "Fiscalité"
+
+#. module: primetech_tax_automation
+msgid "Tableau de bord"
+msgstr "Tableau de bord"
+
+#. module: primetech_tax_automation
+msgid "Tableau de bord fiscal"
+msgstr "Tableau de bord fiscal"
+
+#. module: primetech_tax_automation
+msgid "Déclarations"
+msgstr "Déclarations"
+
+#. module: primetech_tax_automation
+msgid "Règles et correspondances"
+msgstr "Règles et correspondances"
+
+#. module: primetech_tax_automation
+msgid "Règles fiscales"
+msgstr "Règles fiscales"
+
+#. module: primetech_tax_automation
+msgid "Périodes"
+msgstr "Périodes"
+
+#. module: primetech_tax_automation
+msgid "Périodes fiscales"
+msgstr "Périodes fiscales"
+
+#. module: primetech_tax_automation
+msgid "Précomptes"
+msgstr "Précomptes"
+
+#. module: primetech_tax_automation
+msgid "Crédits fiscaux"
+msgstr "Crédits fiscaux"
+
+#. module: primetech_tax_automation
+msgid "Brouillon"
+msgstr "Brouillon"
+
+#. module: primetech_tax_automation
+msgid "Calculée"
+msgstr "Calculée"
+
+#. module: primetech_tax_automation
+msgid "En vérification"
+msgstr "En vérification"
+
+#. module: primetech_tax_automation
+msgid "Validée"
+msgstr "Validée"
+
+#. module: primetech_tax_automation
+msgid "Déclarée"
+msgstr "Déclarée"
+
+#. module: primetech_tax_automation
+msgid "Annulée"
+msgstr "Annulée"
+
+#. module: primetech_tax_automation
+msgid "Calculer"
+msgstr "Calculer"
+
+#. module: primetech_tax_automation
+msgid "Collecter les précomptes"
+msgstr "Collecter les précomptes"
+
+#. module: primetech_tax_automation
+msgid "Envoyer en vérification"
+msgstr "Envoyer en vérification"
+
+#. module: primetech_tax_automation
+msgid "Valider"
+msgstr "Valider"
+
+#. module: primetech_tax_automation
+msgid "Déclarer"
+msgstr "Déclarer"
+
+#. module: primetech_tax_automation
+msgid "Imprimer"
+msgstr "Imprimer"
+
+#. module: primetech_tax_automation
+msgid "Exporter CSV"
+msgstr "Exporter CSV"
+
+#. module: primetech_tax_automation
+msgid "Règlements"
+msgstr "Règlements"
+
+#. module: primetech_tax_automation
+msgid "Traçabilité"
+msgstr "Traçabilité"
+
+#. module: primetech_tax_automation
+msgid "Le module de paie n’est pas disponible. Installez-le avant de calculer une règle de paie."
+msgstr "Le module de paie n’est pas disponible. Installez-le avant de calculer une règle de paie."
+
+#. module: primetech_tax_automation
+msgid "Le modèle de paie installé ne fournit pas les lignes de bulletin attendues."
+msgstr "Le modèle de paie installé ne fournit pas les lignes de bulletin attendues."

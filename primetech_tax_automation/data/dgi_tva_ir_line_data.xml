@@ -1,0 +1,5 @@
+<odoo>
+    <!-- The methods are idempotent: client additions and edits are never overwritten. -->
+    <function model="primetech.dgi.tva.ir.section" name="_load_default_sections"/>
+    <function model="primetech.dgi.tva.ir.line.definition" name="_load_default_line_definitions"/>
+</odoo>

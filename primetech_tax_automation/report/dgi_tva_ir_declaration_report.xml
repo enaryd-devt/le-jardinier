@@ -1,0 +1,126 @@
+<odoo>
+    <record id="action_dgi_tva_ir_declaration_report" model="ir.actions.report">
+        <field name="name">Déclaration DGI TVA/IR - L45 à L76</field>
+        <field name="model">primetech.dgi.tva.ir.declaration</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">primetech_tax_automation.dgi_tva_ir_declaration_document</field>
+        <field name="report_file">primetech_tax_automation.dgi_tva_ir_declaration_document</field>
+        <field name="binding_model_id" ref="model_primetech_dgi_tva_ir_declaration"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="dgi_tva_ir_declaration_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="o" t-value="doc"/>
+                <t t-set="company" t-value="doc.company_id"/>
+                <t t-call="web.external_layout">
+                    <div class="page dgi-tva-ir-page">
+                        <style>
+                            @page { size: A4 portrait; margin: 23mm 8mm 18mm 8mm; }
+                            .dgi-tva-ir-page { color: #111827; font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; line-height: 1.18; }
+                            .dgi-title { text-align: center; border: 1.3px solid #0f3d5e; padding: 7px 10px; margin-bottom: 7px; }
+                            .dgi-title h2 { font-size: 13pt; margin: 0 0 3px 0; color: #0f3d5e; font-weight: 700; }
+                            .dgi-title p { margin: 0; font-size: 8pt; }
+                            .dgi-meta { width: 100%; border-collapse: collapse; margin-bottom: 7px; }
+                            .dgi-meta td { border: 1px solid #7b8794; padding: 4px 5px; width: 25%; }
+                            .dgi-meta .label { color: #344054; font-weight: 700; display: block; font-size: 7pt; text-transform: uppercase; }
+                            .dgi-section { margin: 6px 0 8px 0; page-break-inside: auto; }
+                            .dgi-section-title { background: #d9eaf3; color: #0f3d5e; border: 1px solid #0f3d5e; border-bottom: 0; font-weight: 700; padding: 4px 5px; font-size: 8.7pt; }
+                            .dgi-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+                            .dgi-table thead { display: table-header-group; }
+                            .dgi-table th { background: #edf5f8; color: #1d2939; font-size: 7.4pt; font-weight: 700; text-align: center; vertical-align: middle; }
+                            .dgi-table th, .dgi-table td { border: 1px solid #607d8b; padding: 3px 4px; vertical-align: middle; }
+                            .dgi-table td.amount { text-align: right; white-space: nowrap; }
+                            .dgi-table td.center { text-align: center; }
+                            .dgi-table .code { width: 7%; text-align: center; font-weight: 700; }
+                            .dgi-table .label { width: 39%; }
+                            .dgi-table tr.total-row td { background: #f1f5f9; font-weight: 700; }
+                            .dgi-summary { width: 55%; margin-left: auto; border-collapse: collapse; margin-top: 8px; font-size: 8.8pt; }
+                            .dgi-summary td { border: 1px solid #0f3d5e; padding: 4px 5px; }
+                            .dgi-summary .amount { text-align: right; font-weight: 700; }
+                        </style>
+
+                        <div class="dgi-title">
+                            <h2>DÉCLARATION TVA/IR — RUBRIQUES APPLICABLES</h2>
+                            <p>Version formulaire : <span t-field="doc.form_version"/></p>
+                        </div>
+                        <table class="dgi-meta">
+                            <tr>
+                                <td><span class="label">Contribuable</span><span t-field="doc.company_id"/></td>
+                                <td><span class="label">NIU</span><span t-field="doc.niu"/></td>
+                                <td><span class="label">Période</span><span t-field="doc.date_from"/> au <span t-field="doc.date_to"/></td>
+                                <td><span class="label">Centre des impôts</span><span t-field="doc.tax_center"/></td>
+                            </tr>
+                            <tr>
+                                <td><span class="label">Référence Odoo</span><span t-field="doc.name"/></td>
+                                <td><span class="label">Échéance</span><span t-field="doc.due_date"/></td>
+                                <td><span class="label">Version formulaire</span><span t-field="doc.form_version"/></td>
+                                <td><span class="label">Statut</span><span t-field="doc.state"/></td>
+                            </tr>
+                        </table>
+
+                        <t t-foreach="doc.dgi_sections()" t-as="section">
+                            <t t-set="section_code" t-value="section.code"/>
+                            <t t-set="lines" t-value="doc.dgi_lines_for_section(section_code)"/>
+                            <div class="dgi-section" t-if="lines">
+                                <div class="dgi-section-title"><span t-esc="section.display_name"/></div>
+                                <t t-if="section_code == '11'">
+                                    <table class="dgi-table">
+                                        <thead><tr><th class="code">Ligne</th><th class="label">Nature du revenu</th><th>Base</th><th>Date de paiement</th><th>Principal</th><th>CAC</th><th>Total</th></tr></thead>
+                                        <tbody>
+                                            <tr t-foreach="lines" t-as="line" t-attf-class="#{'total-row' if line.is_total else ''}">
+                                                <td class="code"><span t-esc="line.line_code"/></td><td><span t-field="line.name"/></td>
+                                                <td class="amount"><span t-field="line.base_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                                <td class="center"><span t-field="line.payment_date"/></td>
+                                                <td class="amount"><span t-field="line.principal_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                                <td class="amount"><span t-field="line.cac_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                                <td class="amount"><span t-field="line.total_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </t>
+                                <t t-elif="section_code in ['12', '13']">
+                                    <table class="dgi-table">
+                                        <thead><tr><th class="code">Ligne</th><th class="label">Nature / bénéficiaire</th><th>Base</th><th>Taux</th><th>Principal</th><th>CAC</th><th>Pénalités</th><th>Total</th></tr></thead>
+                                        <tbody>
+                                            <tr t-foreach="lines" t-as="line" t-attf-class="#{'total-row' if line.is_total else ''}">
+                                                <td class="code"><span t-esc="line.line_code"/></td><td><span t-field="line.name"/></td>
+                                                <td class="amount"><span t-field="line.base_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                                <td class="center"><span t-esc="'%.4g' % line.rate"/> %</td>
+                                                <td class="amount"><span t-field="line.principal_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                                <td class="amount"><span t-field="line.cac_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                                <td class="amount"><span t-field="line.penalty_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                                <td class="amount"><span t-field="line.total_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </t>
+                                <t t-else="">
+                                    <table class="dgi-table">
+                                        <thead><tr><th class="code">Ligne</th><th class="label">Rubrique</th><th>Principal</th><th>CAC</th><th>Pénalités</th><th>Total</th></tr></thead>
+                                        <tbody>
+                                            <tr t-foreach="lines" t-as="line" t-attf-class="#{'total-row' if line.is_total else ''}">
+                                                <td class="code"><span t-esc="line.line_code"/></td><td><span t-field="line.name"/></td>
+                                                <td class="amount"><span t-field="line.principal_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                                <td class="amount"><span t-field="line.cac_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                                <td class="amount"><span t-field="line.penalty_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                                <td class="amount"><span t-field="line.total_amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </t>
+                            </div>
+                        </t>
+
+                        <table class="dgi-summary">
+                            <tr><td>Acompte à payer — L54</td><td class="amount"><span t-field="doc.amount_payable" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td></tr>
+                            <tr><td>Crédit d’impôt à reporter — L55</td><td class="amount"><span t-field="doc.credit_to_carry" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td></tr>
+                            <tr><td>Retenues sur salaires — L76</td><td class="amount"><span t-field="doc.salary_withholdings" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></td></tr>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

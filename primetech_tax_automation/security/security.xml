@@ -1,0 +1,7 @@
+<odoo>
+ <record id="group_tax_user" model="res.groups"><field name="name">Utilisateur fiscal</field><field name="category_id" ref="base.module_category_accounting_accounting"/></record>
+ <record id="group_tax_preparer" model="res.groups"><field name="name">Préparateur fiscal</field><field name="implied_ids" eval="[(4,ref('group_tax_user'))]"/></record>
+ <record id="group_tax_manager" model="res.groups"><field name="name">Responsable fiscal</field><field name="implied_ids" eval="[(4,ref('group_tax_preparer'))]"/></record>
+ <record id="group_tax_payroll" model="res.groups"><field name="name">Accès aux données de paie fiscales</field><field name="implied_ids" eval="[(4,ref('group_tax_preparer'))]"/></record>
+ <record id="group_tax_auditor" model="res.groups"><field name="name">Auditeur fiscal</field><field name="implied_ids" eval="[(4,ref('group_tax_user'))]"/></record>
+</odoo>

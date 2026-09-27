@@ -1,0 +1,14 @@
+<odoo>
+    <record id="seq_dgi_tva_ir_declaration" model="ir.sequence">
+        <field name="name">Déclaration DGI TVA/IR</field>
+        <field name="code">primetech.dgi.tva.ir.declaration</field>
+        <field name="prefix">DGI/TVAIR/%(year)s/</field>
+        <field name="padding">4</field>
+    </record>
+    <record id="seq_dgi_tva_ir_section" model="ir.sequence">
+        <field name="name">Rubrique DGI TVA/IR</field>
+        <field name="code">primetech.dgi.tva.ir.section</field>
+        <field name="prefix">DGI/RUB/</field>
+        <field name="padding">3</field>
+    </record>
+</odoo>

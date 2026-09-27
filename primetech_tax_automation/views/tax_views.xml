@@ -1,0 +1,34 @@
+<odoo>
+    <record id="action_tax_dashboard" model="ir.actions.client">
+        <field name="name">Tableau de bord fiscal</field>
+        <field name="tag">primetech_tax_dashboard</field>
+    </record>
+
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.primetech.tax</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//app[@name='general_settings']" position="inside">
+                <block title="Fiscalité DGI" name="primetech_tax_settings">
+                    <setting string="Actualisation du tableau fiscal" company_dependent="1">
+                        <field name="tax_dashboard_refresh_interval"/>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="act_tax_settings" model="ir.actions.act_window">
+        <field name="name">Paramètres fiscaux</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module': 'account', 'bin_size': False}</field>
+    </record>
+
+    <menuitem id="menu_tax_root" name="Fiscalité" action="action_tax_dashboard" web_icon="primetech_tax_automation,static/description/icon.png" sequence="30" groups="primetech_tax_automation.group_tax_user"/>
+    <menuitem id="menu_tax_dashboard" name="Tableau de bord" parent="menu_tax_root" action="action_tax_dashboard" sequence="5"/>
+    <menuitem id="menu_tax_configuration" name="Configuration" parent="menu_tax_root" sequence="90"/>
+    <menuitem id="menu_tax_settings" name="Paramètres fiscaux" parent="menu_tax_configuration" action="act_tax_settings" sequence="30" groups="base.group_system"/>
+</odoo>

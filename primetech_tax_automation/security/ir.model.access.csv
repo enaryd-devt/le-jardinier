@@ -1,0 +1,16 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+dgi_tva_ir_declaration_user,dgi.tva.ir.declaration.user,model_primetech_dgi_tva_ir_declaration,primetech_tax_automation.group_tax_user,1,0,0,0
+dgi_tva_ir_declaration_preparer,dgi.tva.ir.declaration.preparer,model_primetech_dgi_tva_ir_declaration,primetech_tax_automation.group_tax_preparer,1,1,1,0
+dgi_tva_ir_declaration_manager,dgi.tva.ir.declaration.manager,model_primetech_dgi_tva_ir_declaration,primetech_tax_automation.group_tax_manager,1,1,1,1
+dgi_tva_ir_line_user,dgi.tva.ir.line.user,model_primetech_dgi_tva_ir_line,primetech_tax_automation.group_tax_user,1,0,0,0
+dgi_tva_ir_line_preparer,dgi.tva.ir.line.preparer,model_primetech_dgi_tva_ir_line,primetech_tax_automation.group_tax_preparer,1,1,1,0
+dgi_tva_ir_line_manager,dgi.tva.ir.line.manager,model_primetech_dgi_tva_ir_line,primetech_tax_automation.group_tax_manager,1,1,1,1
+dgi_tva_ir_mapping_user,dgi.tva.ir.mapping.user,model_primetech_dgi_tva_ir_mapping,primetech_tax_automation.group_tax_user,1,0,0,0
+dgi_tva_ir_mapping_preparer,dgi.tva.ir.mapping.preparer,model_primetech_dgi_tva_ir_mapping,primetech_tax_automation.group_tax_preparer,1,1,1,0
+dgi_tva_ir_mapping_manager,dgi.tva.ir.mapping.manager,model_primetech_dgi_tva_ir_mapping,primetech_tax_automation.group_tax_manager,1,1,1,1
+dgi_tva_ir_line_definition_user,dgi.tva.ir.line.definition.user,model_primetech_dgi_tva_ir_line_definition,primetech_tax_automation.group_tax_user,1,0,0,0
+dgi_tva_ir_line_definition_preparer,dgi.tva.ir.line.definition.preparer,model_primetech_dgi_tva_ir_line_definition,primetech_tax_automation.group_tax_preparer,1,1,1,0
+dgi_tva_ir_line_definition_manager,dgi.tva.ir.line.definition.manager,model_primetech_dgi_tva_ir_line_definition,primetech_tax_automation.group_tax_manager,1,1,1,1
+dgi_tva_ir_section_user,dgi.tva.ir.section.user,model_primetech_dgi_tva_ir_section,primetech_tax_automation.group_tax_user,1,0,0,0
+dgi_tva_ir_section_preparer,dgi.tva.ir.section.preparer,model_primetech_dgi_tva_ir_section,primetech_tax_automation.group_tax_preparer,1,1,1,0
+dgi_tva_ir_section_manager,dgi.tva.ir.section.manager,model_primetech_dgi_tva_ir_section,primetech_tax_automation.group_tax_manager,1,1,1,1

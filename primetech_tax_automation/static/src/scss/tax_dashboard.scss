@@ -1,0 +1,222 @@
+@keyframes ptTaxRise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes ptTaxPulse { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
+
+.pt-tax-dashboard {
+    --pt-tax-ink: #{$o-gray-900};
+    --pt-tax-primary: #{$o-brand-primary};
+    --pt-tax-surface: #{$o-view-background-color};
+    min-height: 100%; padding: 24px; background: mix($o-brand-primary, $o-view-background-color, 4%);
+    position: relative; color: var(--pt-tax-ink);
+    .pt-tax-hero, .pt-tax-kpis, .pt-tax-grid { animation: ptTaxRise .42s ease both; }
+    .pt-tax-kpis { animation-delay: .06s; } .pt-tax-grid { animation-delay: .12s; }
+}
+.pt-tax-loader { position: absolute; inset: 0; z-index: 5; display: flex; gap: 10px; align-items: center; justify-content: center; color: var(--pt-tax-primary); background: rgba($o-view-background-color, .78); backdrop-filter: blur(2px); font-weight: 600; }
+.pt-tax-hero { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 16px 0 20px; border-bottom: 1px solid mix($o-brand-primary, $o-view-background-color, 16%); }
+.pt-tax-section-label { display: block; font-size: 10px; font-weight: 800; letter-spacing: .12em; opacity: .75; }
+.pt-tax-hero h1 { margin: 0; font: inherit; font-size: 1.5rem; font-weight: 500; }.pt-tax-hero p { margin: 0; }
+.pt-tax-period { display: flex; align-items: end; flex-wrap: wrap; gap: 8px; }.pt-tax-period label { display: grid; gap: 3px; font-size: 11px; font-weight: 700; }.pt-tax-period input, .pt-tax-period select { min-height: 35px; padding: 7px 30px 7px 8px; border: 1px solid mix($o-brand-primary, $o-view-background-color, 22%); border-radius: $border-radius; color: var(--pt-tax-ink); background-color: $o-view-background-color; }
+.pt-tax-kpis { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; margin: 18px 0; }
+.pt-tax-kpi { min-width: 0; cursor: pointer; text-align: left; border: 1px solid mix($o-brand-primary, $o-view-background-color, 16%); border-radius: $border-radius-lg; padding: 17px; color: var(--pt-tax-ink); background: var(--pt-tax-surface); box-shadow: 0 5px 14px rgba($o-brand-primary, .08); transition: transform .18s ease, box-shadow .18s ease; }.pt-tax-kpi:hover { transform: translateY(-3px); box-shadow: 0 11px 20px rgba($o-brand-primary,.16); }.pt-tax-kpi > .fa { float: right; padding: 9px; border-radius: $border-radius; color: var(--pt-tax-primary); background: rgba($o-brand-primary, .12); }.pt-tax-kpi span, .pt-tax-kpi small { display: block; }.pt-tax-kpi span { font-size: 12px; font-weight: 700; }.pt-tax-kpi strong { display: block; margin: 7px 0 5px; overflow: hidden; text-overflow: ellipsis; font-size: 21px; white-space: nowrap; }.pt-tax-kpi small { color: $text-muted; font-size: 10px; }.pt-tax-kpi--due > .fa, .pt-tax-kpi--credit > .fa { color: var(--pt-tax-primary); background: rgba($o-brand-primary, .12); }.pt-tax-kpi-link { padding: 0; border: 0; color: $text-muted; background: transparent; font-size: 10px; text-align: left; }.pt-tax-kpi-link:hover { color: var(--pt-tax-primary); text-decoration: underline; }
+.pt-tax-analysis-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 0 0 16px; }.pt-tax-analysis-grid .pt-tax-panel { min-height: 245px; }
+.pt-tax-compliance { display: flex; align-items: center; gap: 15px; margin: 20px 0 15px; }.pt-tax-score { display: grid; width: 82px; height: 82px; flex: 0 0 82px; place-content: center; border-radius: 50%; background: radial-gradient(closest-side, $o-view-background-color 79%, transparent 80% 100%), conic-gradient(var(--pt-tax-primary) var(--pt-score), rgba($o-brand-primary, .12) 0); text-align: center; }.pt-tax-score strong { font-size: 15px; }.pt-tax-score small { color: $text-muted; font-size: 9px; }.pt-tax-compliance > div:last-child { min-width: 0; }.pt-tax-compliance > div:last-child strong { display: block; font-size: 14px; }.pt-tax-compliance p { margin: 4px 0 0; color: $text-muted; font-size: 11px; }
+.pt-tax-statuses { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }.pt-tax-statuses button { min-width: 0; padding: 8px 5px; border: 1px solid mix($o-brand-primary, $o-view-background-color, 14%); border-radius: $border-radius; color: var(--pt-tax-ink); background: rgba($o-brand-primary, .025); transition: background .18s ease, transform .18s ease; }.pt-tax-statuses button:hover { background: rgba($o-brand-primary, .10); transform: translateY(-1px); }.pt-tax-statuses span, .pt-tax-statuses b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.pt-tax-statuses span { color: $text-muted; font-size: 9px; }.pt-tax-statuses b { margin-top: 2px; font-size: 15px; }
+.pt-tax-rate { padding: 5px 8px; border-radius: 999px; color: var(--pt-tax-primary); background: rgba($o-brand-primary, .10); font-size: 10px; font-weight: 800; white-space: nowrap; }.pt-tax-analysis-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 19px 0 13px; }.pt-tax-analysis-metrics > div { padding: 10px; border-radius: $border-radius; background: rgba($o-brand-primary, .045); }.pt-tax-analysis-metrics span, .pt-tax-analysis-metrics strong { display: block; }.pt-tax-analysis-metrics span { color: $text-muted; font-size: 10px; }.pt-tax-analysis-metrics strong { margin-top: 4px; overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }.pt-tax-section-breakdown { display: grid; gap: 9px; }.pt-tax-section-item > div { display: flex; justify-content: space-between; gap: 9px; font-size: 10px; }.pt-tax-section-item > div span { overflow: hidden; color: $text-muted; text-overflow: ellipsis; white-space: nowrap; }.pt-tax-section-item > div strong { flex: 0 0 auto; font-size: 10px; }.pt-tax-section-item > i { display: block; height: 5px; margin-top: 5px; overflow: hidden; border-radius: 99px; background: rgba($o-brand-primary, .11); }.pt-tax-section-item > i b { display: block; height: 100%; border-radius: inherit; background: var(--pt-tax-primary); transition: width .4s ease; }
+.pt-tax-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(285px, .8fr); gap: 16px; }.pt-tax-panel { min-width: 0; padding: 21px; border: 1px solid mix($o-brand-primary, $o-view-background-color, 14%); border-radius: $border-radius-lg; background: $o-view-background-color; box-shadow: 0 7px 18px rgba($o-brand-primary, .07); }.pt-tax-panel header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }.pt-tax-panel h2 { margin: 3px 0 0; font-size: 17px; font-weight: 750; }.pt-tax-panel .btn-link { padding: 0; font-size: 12px; color: var(--pt-tax-primary); text-decoration: none; }.pt-tax-flow-panel { grid-column: 2; }.pt-tax-deadlines-panel { grid-column: 1 / -1; }
+.pt-tax-chart { display: flex; align-items: end; gap: 7px; height: 195px; margin-top: 16px; padding: 14px 2px 0; overflow-x: auto; }.pt-tax-bar-group { display: grid; flex: 1 0 22px; gap: 5px; min-width: 22px; padding: 0; border: 0; cursor: pointer; text-align: center; font-size: 9px; color: $text-muted; background: transparent; }.pt-tax-bar-track { display: flex; align-items: end; height: 150px; overflow: hidden; border-radius: 6px 6px 2px 2px; background: rgba($o-brand-primary, .10); }.pt-tax-bar-track i { width: 100%; border-radius: 6px 6px 2px 2px; background: var(--pt-tax-primary); transition: height .45s ease; }.pt-tax-bar-group:hover i, .pt-tax-bar-group:focus i { background: darken($o-brand-primary, 8%); }
+.pt-tax-flow { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 20px; }.pt-tax-flow > button { padding: 12px; border: 0; border-radius: $border-radius; color: var(--pt-tax-ink); background: rgba($o-brand-primary, .06); text-align: left; transition: background .18s ease, transform .18s ease; }.pt-tax-flow > button:hover { background: rgba($o-brand-primary, .12); transform: translateY(-2px); }.pt-tax-flow-icon { display: inline-grid; place-items: center; width: 25px; height: 25px; border-radius: 50%; color: $o-view-background-color; background: var(--pt-tax-primary); }.pt-tax-flow-icon.out { background: darken($o-brand-primary, 10%); }.pt-tax-flow p { margin: 8px 0 2px; color: $text-muted; font-size: 11px; }.pt-tax-flow strong, .pt-tax-payroll strong { font-size: 14px; }.pt-tax-payroll { display: flex; width: 100%; align-items: center; gap: 10px; margin-top: 14px; padding: 11px; border: 0; border-top: 1px solid mix($o-brand-primary, $o-view-background-color, 14%); color: var(--pt-tax-ink); background: transparent; text-align: left; }.pt-tax-payroll:hover { background: rgba($o-brand-primary, .05); }.pt-tax-payroll > .fa { padding: 9px; border-radius: $border-radius; color: var(--pt-tax-primary); background: rgba($o-brand-primary, .12); }.pt-tax-payroll span, .pt-tax-payroll small { display: block; }.pt-tax-payroll span { font-size: 11px; color: $text-muted; }.pt-tax-payroll small { margin-left: auto; color: $text-muted; font-size: 10px; }
+.pt-tax-settlement-insights { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 10px; }.pt-tax-settlement-insights button { padding: 10px; border: 1px solid mix($o-brand-primary, $o-view-background-color, 14%); border-radius: $border-radius; color: var(--pt-tax-ink); background: $o-view-background-color; text-align: left; transition: background .18s ease, transform .18s ease; }.pt-tax-settlement-insights button:hover { background: rgba($o-brand-primary, .06); transform: translateY(-1px); }.pt-tax-settlement-insights span, .pt-tax-settlement-insights strong, .pt-tax-settlement-insights small { display: block; }.pt-tax-settlement-insights span, .pt-tax-settlement-insights small { color: $text-muted; font-size: 10px; }.pt-tax-settlement-insights strong { margin: 4px 0 2px; overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.pt-tax-deadlines { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; margin-top: 16px; }.pt-tax-deadlines button { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; border: 1px solid mix($o-brand-primary, $o-view-background-color, 14%); border-left: 3px solid var(--pt-tax-primary); border-radius: $border-radius; text-align: left; background: $o-view-background-color; transition: background .18s ease; }.pt-tax-deadlines button:hover { background: rgba($o-brand-primary, .06); }.pt-tax-deadlines button.is-late { border-left-color: darken($o-brand-primary, 12%); }.pt-tax-deadlines b, .pt-tax-deadlines small { display: block; }.pt-tax-deadlines b { font-size: 11px; }.pt-tax-deadlines small { margin-top: 3px; color: $text-muted; font-size: 10px; }.pt-tax-deadlines button > span:last-child { text-align: right; }
+.pt-tax-no-data { margin: 40px 0; color: $text-muted; text-align: center; font-size: 13px; }
+.pt-tax-detail-overlay { position: fixed; inset: 0; z-index: 1050; display: grid; place-items: center; padding: 24px; background: rgba($o-gray-900, .42); backdrop-filter: blur(3px); }.pt-tax-detail-modal { display: flex; width: 96vw; max-width: 980px; max-height: 90vh; flex-direction: column; overflow: hidden; border: 1px solid mix($o-brand-primary, $o-view-background-color, 18%); border-radius: $border-radius-lg; background: $o-view-background-color; box-shadow: 0 24px 70px rgba($o-gray-900, .28); animation: ptTaxRise .25s ease both; }.pt-tax-detail-modal > header, .pt-tax-detail-modal > footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid mix($o-brand-primary, $o-view-background-color, 14%); }.pt-tax-detail-modal > footer { justify-content: flex-end; border-top: 1px solid mix($o-brand-primary, $o-view-background-color, 14%); border-bottom: 0; }.pt-tax-detail-modal h2 { margin: 3px 0 0; font-size: 18px; }.pt-tax-detail-loading { display: grid; min-height: 240px; place-items: center; color: var(--pt-tax-primary); }.pt-tax-detail-summary { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; color: $text-muted; background: rgba($o-brand-primary, .05); }.pt-tax-detail-summary strong { color: var(--pt-tax-ink); }.pt-tax-detail-table-wrap { overflow: auto; }.pt-tax-detail-table-wrap table { margin: 0; }.pt-tax-detail-table-wrap thead { position: sticky; top: 0; z-index: 1; background: $o-view-background-color; }.pt-tax-detail-table-wrap tbody tr { cursor: pointer; }.pt-tax-source { display: inline-block; padding: 3px 7px; border-radius: 999px; color: var(--pt-tax-primary); background: rgba($o-brand-primary, .10); font-size: 10px; font-weight: 700; white-space: nowrap; }
+@media (max-width: 1100px) { .pt-tax-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }.pt-tax-analysis-grid, .pt-tax-grid { grid-template-columns: 1fr; }.pt-tax-flow-panel, .pt-tax-deadlines-panel { grid-column: auto; }.pt-tax-deadlines { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .pt-tax-dashboard { padding: 12px; }.pt-tax-hero { align-items: stretch; flex-direction: column; padding: 20px; border-radius: 15px; }.pt-tax-hero h1 { font-size: 23px; }.pt-tax-period { display: grid; grid-template-columns: 1fr 1fr; }.pt-tax-period label:first-child { grid-column: 1 / -1; }.pt-tax-period input, .pt-tax-period select { width: 100%; }.pt-tax-kpis { grid-template-columns: 1fr; gap: 9px; margin: 10px 0; }.pt-tax-kpi { padding: 14px; }.pt-tax-panel { padding: 15px; border-radius: 14px; }.pt-tax-statuses { grid-template-columns: repeat(3, minmax(0, 1fr)); }.pt-tax-deadlines { grid-template-columns: 1fr; }.pt-tax-chart { height: 175px; }.pt-tax-flow { gap: 7px; }.pt-tax-detail-overlay { padding: 8px; }.pt-tax-detail-modal { width: 100%; max-height: 94vh; }.pt-tax-detail-table-wrap table { min-width: 720px; }.pt-tax-payroll { align-items: flex-start; flex-wrap: wrap; }.pt-tax-payroll small { width: 100%; margin-left: 45px; } }
+@media (prefers-reduced-motion: reduce) { .pt-tax-dashboard *, .pt-tax-dashboard { animation: none !important; transition: none !important; } }
+
+// Calcul DGI : présentation volontairement douce, construite avec les
+// variables Odoo afin de suivre le thème actif (clair, sombre ou personnalisé).
+.o_primetech_dgi_calculation_page {
+    .o_primetech_dgi_calculation_intro {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin: 0 0 14px;
+        padding: 11px 13px;
+        border: 1px solid mix($o-brand-primary, $o-view-background-color, 16%);
+        border-radius: $border-radius-lg;
+        color: $text-muted;
+        background: rgba($o-brand-primary, .045);
+        font-size: 12px;
+        line-height: 1.45;
+
+        > .fa {
+            flex: 0 0 auto;
+            margin-top: 2px;
+            color: $o-brand-primary;
+            font-size: 16px;
+        }
+
+        strong { color: $o-gray-900; font-weight: 700; }
+    }
+
+    .o_primetech_dgi_calculation_lines {
+        .o_list_renderer {
+            overflow: hidden;
+            border: 1px solid mix($o-brand-primary, $o-view-background-color, 14%);
+            border-radius: $border-radius-lg;
+            background: $o-view-background-color;
+            box-shadow: 0 5px 16px rgba($o-brand-primary, .045);
+        }
+
+        .o_list_table {
+            margin: 0;
+
+            > thead > tr > th {
+                padding-top: 10px;
+                padding-bottom: 10px;
+                border-bottom-color: mix($o-brand-primary, $o-view-background-color, 18%);
+                color: $text-muted;
+                background: rgba($o-brand-primary, .035);
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: .01em;
+            }
+
+            > tbody > tr.o_data_row {
+                transition: background-color .16s ease;
+
+                > td {
+                    padding-top: 9px;
+                    padding-bottom: 9px;
+                    border-bottom-color: mix($o-brand-primary, $o-view-background-color, 8%);
+                }
+
+                &:hover > td { background: rgba($o-brand-primary, .035); }
+
+                &.text-primary > td {
+                    border-top-color: mix($o-brand-primary, $o-view-background-color, 26%);
+                    border-bottom-color: mix($o-brand-primary, $o-view-background-color, 26%);
+                    color: $o-gray-900;
+                    background: rgba($o-brand-primary, .09);
+                    font-weight: 700;
+                }
+
+                &.text-primary > td:first-child { box-shadow: inset 3px 0 0 $o-brand-primary; }
+
+                &.text-info > td {
+                    color: $o-gray-900;
+                    background: rgba($o-brand-primary, .055);
+                    font-weight: 700;
+                }
+
+                &.text-info > td:first-child { box-shadow: inset 3px 0 0 rgba($o-brand-primary, .55); }
+            }
+        }
+    }
+}
+
+// DGI calculation details: the visual hierarchy follows the standard Odoo
+// palette, so it is recompiled with the active backend theme.
+.o_primetech_dgi_calculation_page {
+    --pt-dgi-brand: #{$o-brand-primary};
+    --pt-dgi-surface: #{$o-view-background-color};
+
+    .o_primetech_dgi_calculation_lines {
+        .o_list_renderer {
+            border-color: mix($o-brand-primary, $o-view-background-color, 23%);
+            border-radius: $border-radius-lg;
+            box-shadow: 0 10px 26px rgba($o-brand-primary, .08);
+        }
+
+        .o_list_table {
+            > thead > tr > th {
+                padding: 11px 10px;
+                color: $text-muted;
+                background: mix($o-brand-primary, $o-view-background-color, 5%);
+                font-size: 10px;
+                font-weight: 800;
+                letter-spacing: .025em;
+                text-transform: uppercase;
+            }
+
+            > tbody > tr.o_data_row {
+                border-bottom-color: mix($o-brand-primary, $o-view-background-color, 10%);
+
+                > .o_data_cell {
+                    padding: 12px 10px;
+                    color: $o-gray-900;
+                    vertical-align: middle;
+                }
+
+                &:nth-child(even):not(.text-primary):not(.text-info) > .o_data_cell {
+                    background: rgba($o-brand-primary, .025);
+                }
+
+                &:hover:not(.text-primary):not(.text-info) > .o_data_cell {
+                    background: rgba($o-brand-primary, .07);
+                }
+
+                .o_primetech_dgi_line_code {
+                    width: 76px;
+
+                    .o_field_widget,
+                    .o_list_char {
+                        display: inline-flex;
+                        min-width: 48px;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 5px 8px;
+                        border-radius: 7px;
+                        color: darken($o-brand-primary, 12%);
+                        background: rgba($o-brand-primary, .12);
+                        font-weight: 800;
+                    }
+                }
+
+                .o_primetech_dgi_grand_total {
+                    color: darken($o-brand-primary, 14%);
+                    font-size: 1.06em;
+                    font-weight: 800;
+                }
+
+                &.text-primary {
+                    border-top: 1px solid $o-brand-primary;
+                    border-bottom: 1px solid $o-brand-primary;
+                    box-shadow: 0 5px 16px rgba($o-brand-primary, .16);
+
+                    > .o_data_cell {
+                        padding-top: 15px;
+                        padding-bottom: 15px;
+                        color: darken($o-brand-primary, 18%);
+                        background: linear-gradient(90deg, rgba($o-brand-primary, .16), rgba($o-brand-primary, .045));
+                        font-size: 1.03em;
+                        font-weight: 800;
+                    }
+
+                    > .o_primetech_dgi_line_code {
+                        color: $o-view-background-color;
+                        background: $o-brand-primary;
+                        box-shadow: none;
+
+                        .o_field_widget,
+                        .o_list_char {
+                            color: inherit;
+                            background: transparent;
+                        }
+                    }
+
+                    > .o_primetech_dgi_grand_total {
+                        color: $o-view-background-color;
+                        background: $o-brand-primary;
+                        box-shadow: inset 0 0 0 1px rgba($o-view-background-color, .16);
+                        font-size: 1.25em;
+                    }
+                }
+
+                &.text-info > .o_data_cell {
+                    color: darken($o-brand-primary, 10%);
+                    background: rgba($o-brand-primary, .075);
+                }
+            }
+        }
+    }
+}

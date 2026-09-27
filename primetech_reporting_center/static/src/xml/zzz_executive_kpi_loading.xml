@@ -7,9 +7,6 @@
         <xpath expr="//select[contains(@t-on-change, 'billing_period')]/ancestor::article[1]" position="inside">
             <div t-if="isKpiLoading('billing_period')" class="pt-kpi-loading-overlay" role="status" aria-live="polite"><i class="fa fa-spinner fa-spin"/><span>Mise à jour des données…</span></div>
         </xpath>
-        <xpath expr="//select[contains(@t-on-change, 'stock_scope')]/ancestor::article[1]" position="inside">
-            <div t-if="isKpiLoading('stock_scope')" class="pt-kpi-loading-overlay" role="status" aria-live="polite"><i class="fa fa-spinner fa-spin"/><span>Mise à jour des données…</span></div>
-        </xpath>
         <xpath expr="//select[contains(@t-on-change, 'store_period')]/ancestor::article[1]" position="inside">
             <div t-if="isKpiLoading('store_period')" class="pt-kpi-loading-overlay" role="status" aria-live="polite"><i class="fa fa-spinner fa-spin"/><span>Mise à jour des données…</span></div>
         </xpath>

@@ -1,0 +1,236 @@
+<odoo>
+    <record id="dgi_tva_ir_declaration_list" model="ir.ui.view">
+        <field name="name">primetech.dgi.tva.ir.declaration.list</field>
+        <field name="model">primetech.dgi.tva.ir.declaration</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="company_id"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="due_date"/>
+                <field name="amount_payable"/>
+                <field name="credit_to_carry"/>
+                <field name="salary_withholdings"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="dgi_tva_ir_declaration_form" model="ir.ui.view">
+        <field name="name">primetech.dgi.tva.ir.declaration.form</field>
+        <field name="model">primetech.dgi.tva.ir.declaration</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_calculate" type="object" string="Calculer" class="btn-primary" invisible="state not in ['draft', 'calculated', 'review']"/>
+                    <button name="action_reset_to_draft" type="object" string="Remettre en brouillon" icon="fa-undo" confirm="Remettre cette déclaration en brouillon pour la recalculer ?" invisible="state not in ['calculated', 'cancelled']"/>
+                    <button name="action_review" type="object" string="Envoyer en vérification" invisible="state != 'calculated'"/>
+                    <button name="action_validate" type="object" string="Valider" class="btn-primary" groups="primetech_tax_automation.group_tax_manager" invisible="state not in ['calculated', 'review']"/>
+                    <button name="action_file" type="object" string="Marquer comme déclarée" invisible="state != 'validated'"/>
+                    <button name="%(action_dgi_tva_ir_declaration_report)d" type="action" string="Imprimer" icon="fa-print" invisible="state == 'draft'"/>
+                    <button name="action_cancel" type="object" string="Annuler" groups="primetech_tax_automation.group_tax_manager" confirm="Annuler cette déclaration et libérer les précomptes réservés ?" invisible="state in ['cancelled', 'filed']"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,calculated,review,validated,filed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                        <p class="text-muted">Saisissez la période, puis cliquez sur « Calculer ». Les montants proviennent des comptes configurés dans Correspondances fiscales.</p>
+                    </div>
+                    <group string="Période de déclaration">
+                        <field name="company_id" readonly="1"/>
+                        <field name="date_from" required="1" readonly="state != 'draft'"/>
+                        <field name="date_to" required="1" readonly="state != 'draft'"/>
+                        <field name="due_date" readonly="1"/>
+                        <field name="form_version" readonly="1"/>
+                    </group>
+                    <notebook>
+                        <page string="Détail calculé" class="o_primetech_dgi_calculation_page">
+                            <div class="o_primetech_dgi_calculation_intro">
+                                <span class="fa fa-calculator" title="Calcul automatique"/>
+                                <span><strong>Calcul automatique</strong><br/>Les rubriques proviennent des comptes configurés. Les totaux et soldes restent mis en évidence de façon douce, selon le thème actif.</span>
+                            </div>
+                            <field name="line_ids" readonly="1" class="o_primetech_dgi_calculation_lines">
+                                <list create="false" delete="false" decoration-bf="is_total or is_balance" decoration-primary="is_total" decoration-info="is_balance">
+                                    <field name="sequence" column_invisible="True"/>
+                                    <field name="is_total" column_invisible="True"/>
+                                    <field name="is_balance" column_invisible="True"/>
+                                    <field name="line_code" class="o_primetech_dgi_line_code"/>
+                                    <field name="name"/>
+                                    <field name="mapping_id" optional="hide"/>
+                                    <field name="source_account_ids" widget="many2many_tags" optional="hide"/>
+                                    <field name="source_count"/>
+                                    <field name="base_amount"/>
+                                    <field name="rate"/>
+                                    <field name="principal_amount"/>
+                                    <field name="cac_amount"/>
+                                    <field name="penalty_amount" optional="hide"/>
+                                    <field name="total_amount" readonly="1" class="o_primetech_dgi_grand_total"/>
+                                    <button name="action_sources" type="object" icon="fa-search" title="Voir les éléments sources" invisible="not source_model"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="dgi_tva_ir_mapping_list" model="ir.ui.view">
+        <field name="name">primetech.dgi.tva.ir.mapping.list</field>
+        <field name="model">primetech.dgi.tva.ir.mapping</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="line_definition_id"/>
+                <field name="account_ids" widget="many2many_tags"/>
+                <field name="amount_mode"/>
+                <field name="rate"/>
+                <field name="fixed_amount" optional="hide"/>
+                <field name="cac_rate"/>
+                <field name="company_id" optional="hide"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="dgi_tva_ir_mapping_form" model="ir.ui.view">
+        <field name="name">primetech.dgi.tva.ir.mapping.form</field>
+        <field name="model">primetech.dgi.tva.ir.mapping</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title"><h1>Correspondance DGI TVA/IR</h1></div>
+                    <p class="text-muted">Pour chaque rubrique applicable, sélectionnez les comptes du plan comptable. Le sens de calcul est déterminé automatiquement par le type de chaque compte.</p>
+                    <group>
+                        <group string="Rubrique et comptes sources">
+                            <field name="line_definition_id"/>
+                            <field name="calculation_mode" invisible="1"/>
+                            <field name="account_ids" widget="many2many_tags" required="amount_mode != 'fixed_amount'" invisible="amount_mode == 'fixed_amount'" options="{'no_create_edit': True}"/>
+                        </group>
+                        <group string="Calcul">
+                            <field name="amount_mode"/>
+                            <field name="rate" required="amount_mode == 'base_times_rate'" invisible="amount_mode == 'fixed_amount'"/>
+                            <field name="fixed_amount" required="amount_mode == 'fixed_amount'" invisible="amount_mode != 'fixed_amount'"/>
+                            <field name="cac_rate"/>
+                            <field name="absolute_source"/>
+                        </group>
+                    </group>
+                    <group string="Informations complémentaires" col="2">
+                        <field name="company_id"/>
+                        <field name="active"/>
+                        <field name="note" colspan="2" placeholder="Ex. justification du choix des comptes ou précision utile."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_dgi_tva_ir_declaration" model="ir.actions.act_window">
+        <field name="name">Déclarations DGI TVA/IR</field>
+        <field name="res_model">primetech.dgi.tva.ir.declaration</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="action_dgi_tva_ir_mapping" model="ir.actions.act_window">
+        <field name="name">Correspondances DGI TVA/IR</field>
+        <field name="res_model">primetech.dgi.tva.ir.mapping</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="dgi_tva_ir_section_list" model="ir.ui.view">
+        <field name="name">primetech.dgi.tva.ir.section.list</field>
+        <field name="model">primetech.dgi.tva.ir.section</field>
+        <field name="arch" type="xml">
+            <list decoration-muted="not active">
+                <field name="sequence"/>
+                <field name="name"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+    <record id="dgi_tva_ir_section_form" model="ir.ui.view">
+        <field name="name">primetech.dgi.tva.ir.section.form</field>
+        <field name="model">primetech.dgi.tva.ir.section</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title"><h1>Rubrique DGI TVA/IR</h1></div>
+                    <p class="text-muted">Créez ou adaptez les rubriques utilisées par les lignes de votre déclaration DGI.</p>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                        </group>
+                        <group>
+                            <field name="sequence"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_dgi_tva_ir_section" model="ir.actions.act_window">
+        <field name="name">Rubriques DGI TVA/IR</field>
+        <field name="res_model">primetech.dgi.tva.ir.section</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="dgi_tva_ir_line_definition_list" model="ir.ui.view">
+        <field name="name">primetech.dgi.tva.ir.line.definition.list</field>
+        <field name="model">primetech.dgi.tva.ir.line.definition</field>
+        <field name="arch" type="xml">
+            <list decoration-muted="not active">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="section_id"/>
+                <field name="calculation_mode"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+    <record id="dgi_tva_ir_line_definition_form" model="ir.ui.view">
+        <field name="name">primetech.dgi.tva.ir.line.definition.form</field>
+        <field name="model">primetech.dgi.tva.ir.line.definition</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title"><h1>Ligne DGI TVA/IR</h1></div>
+                    <p class="text-muted">Ajoutez les rubriques applicables Ã  l'entreprise, par exemple L44 ou L77. Elles seront ensuite disponibles dans les correspondances fiscales et dans les nouvelles dÃ©clarations.</p>
+                    <group>
+                        <group>
+                            <field name="code" placeholder="Ex. L44 ou L77"/>
+                            <field name="name"/>
+                            <field name="section_id" required="1" domain="[('active', '=', True)]"/>
+                            <field name="section_code" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="calculation_mode"/>
+                            <field name="active"/>
+                            <field name="formula_code" invisible="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_dgi_tva_ir_line_definition" model="ir.actions.act_window">
+        <field name="name">Lignes DGI TVA/IR</field>
+        <field name="res_model">primetech.dgi.tva.ir.line.definition</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Navigation simplifiée : une seule entrée Déclarations et une seule
+         entrée de correspondances pour les rubriques DGI. -->
+    <record id="menu_tax_declaration" model="ir.ui.menu">
+        <field name="name">Déclarations</field>
+        <field name="parent_id" ref="menu_tax_root"/>
+        <field name="action" ref="action_dgi_tva_ir_declaration"/>
+        <field name="sequence">10</field>
+    </record>
+    <record id="menu_dgi_tva_ir_declaration" model="ir.ui.menu">
+        <field name="active">False</field>
+    </record>
+    <record id="menu_tax_dashboard" model="ir.ui.menu">
+        <field name="active">True</field>
+    </record>
+    <menuitem id="menu_dgi_tva_ir_section" name="Rubriques DGI" parent="menu_tax_configuration" action="action_dgi_tva_ir_section" sequence="3" groups="primetech_tax_automation.group_tax_preparer"/>
+    <menuitem id="menu_dgi_tva_ir_line_definition" name="Lignes DGI" parent="menu_tax_configuration" action="action_dgi_tva_ir_line_definition" sequence="5" groups="primetech_tax_automation.group_tax_preparer"/>
+    <menuitem id="menu_dgi_tva_ir_mapping" name="Correspondances fiscales" parent="menu_tax_configuration" action="action_dgi_tva_ir_mapping" sequence="10" groups="primetech_tax_automation.group_tax_preparer"/>
+</odoo>

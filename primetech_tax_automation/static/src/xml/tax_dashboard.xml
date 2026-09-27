@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="primetech_tax_automation.TaxDashboard" owl="1">
+        <main class="pt-tax-dashboard" t-ref="dashboardRoot" t-att-class="state.loading ? 'is-loading' : ''">
+            <div class="pt-tax-loader" t-if="state.loading"><i class="fa fa-spinner fa-spin"/><span>Actualisation des données fiscales…</span></div>
+            <t t-if="state.data">
+                <section class="pt-tax-hero">
+                    <h1>Tableau de bord</h1>
+                    <div class="pt-tax-period" aria-label="Période d'analyse">
+                        <label>Période
+                            <select t-att-value="state.period" t-on-change="onPeriodChange">
+                                <option value="month">Ce mois</option>
+                                <option value="quarter">Ce trimestre</option>
+                                <option value="semester">Ce semestre</option>
+                                <option value="year">Cette année</option>
+                                <option value="custom">Période personnalisée</option>
+                            </select>
+                        </label>
+                        <t t-if="state.period === 'custom'">
+                            <label>Du<input type="date" t-att-value="state.dateFrom" t-on-change="onDateFromChange"/></label>
+                            <label>Au<input type="date" t-att-value="state.dateTo" t-on-change="onDateToChange"/></label>
+                        </t>
+                    </div>
+                </section>
+
+                <section class="pt-tax-kpis">
+                    <button class="pt-tax-kpi pt-tax-kpi--sales" t-on-click="openAllSales">
+                        <i class="fa fa-line-chart"/><span>Chiffre d’affaires</span><strong t-esc="format(state.data.kpis.sales)"/><small>Factures : <t t-esc="format(state.data.kpis.invoice_sales)"/> · POS : <t t-esc="format(state.data.kpis.pos_sales)"/></small>
+                    </button>
+                    <button class="pt-tax-kpi pt-tax-kpi--base" t-on-click="openTaxBase">
+                        <i class="fa fa-calculator"/><span>Bases fiscales</span><strong t-esc="format(state.data.kpis.tax_base)"/><small>Déclarations calculées sur la période</small>
+                    </button>
+                    <button class="pt-tax-kpi pt-tax-kpi--due" t-on-click="openDueDeclarations">
+                        <i class="fa fa-balance-scale"/><span>Montant à payer</span><strong t-esc="format(state.data.kpis.amount_due)"/><small>Déclarations non encore déposées</small>
+                    </button>
+                    <button class="pt-tax-kpi pt-tax-kpi--credit" t-on-click="openTaxBase">
+                        <i class="fa fa-users"/><span>Retenues sur salaires</span><strong t-esc="format(state.data.kpis.salary_withholdings)"/><small>Total des déclarations DGI de la période</small>
+                    </button>
+                </section>
+
+                <section class="pt-tax-grid">
+                    <article class="pt-tax-panel pt-tax-sales-panel">
+                        <header><div><span class="pt-tax-section-label">ACTIVITÉ</span><h2 t-esc="state.data.timeline_title"/></div><button class="btn btn-link" t-on-click="openAllSales">Voir toutes les ventes <i class="fa fa-arrow-right"/></button></header>
+                        <div class="pt-tax-chart" t-ref="salesChart" t-if="state.data.timeline.length">
+                            <t t-foreach="state.data.timeline" t-as="point" t-key="point.key">
+                                <button type="button" class="pt-tax-bar-group" t-att-title="format(point.value)" t-on-click="() => this.openSalesBand(point)">
+                                    <div class="pt-tax-bar-track"><i t-att-style="'height:' + barHeight(point.value) + '%'"/></div>
+                                    <span t-esc="point.label"/>
+                                </button>
+                            </t>
+                        </div>
+                        <p class="pt-tax-no-data" t-else="">Aucune vente validée sur cette période.</p>
+                    </article>
+
+                    <article class="pt-tax-panel pt-tax-flow-panel">
+                        <header><div><span class="pt-tax-section-label">RÈGLEMENTS</span><h2>Flux Banque et Espèces</h2></div><button class="btn btn-link" t-on-click="() => this.openPayments()">Voir les règlements <i class="fa fa-arrow-right"/></button></header>
+                        <div class="pt-tax-flow">
+                            <button type="button" t-on-click="() => this.openPayments('inbound')"><span class="pt-tax-flow-icon in"><i class="fa fa-arrow-down"/></span><p>Encaissements</p><strong t-esc="format(state.data.kpis.payments_in)"/></button>
+                            <button type="button" t-on-click="() => this.openPayments('outbound')"><span class="pt-tax-flow-icon out"><i class="fa fa-arrow-up"/></span><p>Décaissements</p><strong t-esc="format(state.data.kpis.payments_out)"/></button>
+                        </div>
+                        <div class="pt-tax-settlement-insights">
+                            <button type="button" t-on-click="() => this.openPayments()"><span>Solde des flux</span><strong t-esc="format(state.data.settlements.net_cash_flow)"/><small><t t-esc="state.data.settlements.payment_count"/> règlement(s) comptabilisé(s)</small></button>
+                            <button type="button" t-on-click="() => this.openPayments('inbound')"><span>Taux d’encaissement</span><strong t-esc="percentage(state.data.settlements.collection_rate)"/><small>Moyenne : <t t-esc="format(state.data.settlements.average_receipt)"/></small></button>
+                        </div>
+                        <button type="button" class="pt-tax-payroll" t-on-click="openPayroll"><i class="fa fa-users"/><div><span>Masse salariale / paie</span><strong t-esc="format(state.data.kpis.salary_withholdings)"/></div><small t-if="state.data.payroll_status === 'unavailable'">Module Payroll non détecté</small><small t-elif="state.data.payroll_status === 'restricted'">Accès paie non attribué</small><small t-else=""><t t-esc="state.data.payroll_count"/> bulletin(s) validé(s)</small></button>
+                    </article>
+
+                    <article class="pt-tax-panel pt-tax-deadlines-panel">
+                        <header><div><span class="pt-tax-section-label">CONFORMITÉ</span><h2>Échéances à surveiller</h2></div><button class="btn btn-link" t-on-click="openDueDeclarations">Tout voir <i class="fa fa-arrow-right"/></button></header>
+                        <div class="pt-tax-deadlines" t-if="state.data.deadlines.length">
+                            <t t-foreach="state.data.deadlines" t-as="deadline" t-key="deadline.id"><button t-on-click="() => this.openDeclarations(deadline.id)" t-att-class="deadline.late ? 'is-late' : ''"><span><b t-esc="deadline.rule"/><small t-esc="deadline.name"/></span><span><b t-esc="formatDate(deadline.due_date)"/><small t-esc="format(deadline.amount)"/></span></button></t>
+                        </div>
+                        <p class="pt-tax-no-data" t-else="">Aucune déclaration en attente sur cette période.</p>
+                    </article>
+                </section>
+
+                <section class="pt-tax-analysis-grid" t-if="state.data.analysis">
+                    <article class="pt-tax-panel pt-tax-status-panel">
+                        <header><div><span class="pt-tax-section-label">SUIVI DGI</span><h2>État des déclarations</h2></div><button class="btn btn-link" t-on-click="openDeclarations">Voir les déclarations <i class="fa fa-arrow-right"/></button></header>
+                        <div class="pt-tax-compliance">
+                            <div class="pt-tax-score" t-att-style="'--pt-score:' + scoreAngle(state.data.analysis.compliance_rate)">
+                                <strong t-esc="percentage(state.data.analysis.compliance_rate)"/><small>conformes</small>
+                            </div>
+                            <div><strong><t t-esc="state.data.analysis.declaration_count"/> déclaration(s)</strong><p><t t-esc="state.data.analysis.pending_count"/> encore à finaliser · <t t-esc="state.data.analysis.overdue_count"/> en retard</p></div>
+                        </div>
+                        <div class="pt-tax-statuses">
+                            <t t-foreach="state.data.analysis.status_summary" t-as="status" t-key="status.state">
+                                <button type="button" t-on-click="() => this.openDeclarationsByState(status.state)"><span t-esc="status.label"/><b t-esc="status.count"/></button>
+                            </t>
+                        </div>
+                    </article>
+
+                    <article class="pt-tax-panel pt-tax-dgi-analysis-panel">
+                        <header><div><span class="pt-tax-section-label">ANALYSE DGI</span><h2>Répartition des montants</h2></div><span class="pt-tax-rate"><t t-esc="percentage(state.data.analysis.tax_pressure)"/> du CA</span></header>
+                        <div class="pt-tax-analysis-metrics">
+                            <div><span>Pression fiscale estimée</span><strong t-esc="percentage(state.data.analysis.tax_pressure)"/></div>
+                            <div><span>Crédit à reporter</span><strong t-esc="format(state.data.analysis.credit_to_carry)"/></div>
+                        </div>
+                        <div class="pt-tax-section-breakdown" t-if="state.data.analysis.section_breakdown.length">
+                            <t t-foreach="state.data.analysis.section_breakdown" t-as="section" t-key="section.code">
+                                <div class="pt-tax-section-item"><div><span t-esc="section.name"/><strong t-esc="format(section.amount)"/></div><i><b t-att-style="'width:' + sectionWidth(section) + '%'"/></i></div>
+                            </t>
+                        </div>
+                        <p class="pt-tax-no-data" t-else="">Aucun montant calculé à analyser sur cette période.</p>
+                    </article>
+                </section>
+            </t>
+
+            <div class="pt-tax-detail-overlay" t-if="state.salesDetail.open" role="dialog" aria-modal="true" aria-label="Détail des ventes">
+                <section class="pt-tax-detail-modal">
+                    <header>
+                        <div><span class="pt-tax-section-label">VENTES RÉALISÉES</span><h2 t-esc="state.salesDetail.label"/></div>
+                        <button type="button" class="btn btn-light" t-on-click="closeSalesDetail" title="Fermer"><i class="fa fa-times"/></button>
+                    </header>
+                    <div class="pt-tax-detail-loading" t-if="state.salesDetail.loading"><i class="fa fa-spinner fa-spin"/> Chargement des ventes…</div>
+                    <t t-else="">
+                        <div class="pt-tax-detail-summary"><span><t t-esc="state.salesDetail.rows.length"/> vente(s)</span><strong t-esc="format(state.salesDetail.total)"/></div>
+                        <div class="pt-tax-detail-table-wrap" t-if="state.salesDetail.rows.length">
+                            <table class="table table-hover">
+                                <thead><tr><th>Source</th><th>Date</th><th>Référence</th><th>Client</th><th class="text-end">Montant HT</th></tr></thead>
+                                <tbody>
+                                    <t t-foreach="state.salesDetail.rows" t-as="row" t-key="row.key">
+                                        <tr t-on-click="() => this.openSaleRecord(row)"><td><span class="pt-tax-source" t-esc="row.source"/></td><td t-esc="formatDate(row.date)"/><td t-esc="row.reference"/><td t-esc="row.partner"/><td class="text-end" t-esc="format(row.amount)"/></tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="pt-tax-no-data" t-else="">Aucune vente validée dans cette bande.</p>
+                    </t>
+                    <footer><button type="button" class="btn btn-secondary" t-on-click="closeSalesDetail">Retour au tableau de bord</button></footer>
+                </section>
+            </div>
+        </main>
+    </t>
+</templates>
