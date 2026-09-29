@@ -7773,6 +7773,17 @@
 .pt-exec-board .pt-eb-kpis .tone-teal { --pt-kpi: #eb0b68; --pt-kpi-deep: #af034a; --pt-kpi-soft: #fff1f7; --pt-kpi-border: #ffc9dd; }
 .pt-exec-board .pt-eb-kpis .tone-yellow { --pt-kpi: #d5a700; --pt-kpi-deep: #896900; --pt-kpi-soft: #fffbee; --pt-kpi-border: #f4e4a8; }
 
+/* Palette fixe : ces couleurs ne suivent volontairement pas le thème Odoo actif. */
+.pt-exec-board .pt-eb-kpis .pt-eb-kpi.tone-blue .pt-eb-icon { background: #1683f5 !important; color: #fff !important; }
+.pt-exec-board .pt-eb-kpis .pt-eb-kpi.tone-green .pt-eb-icon { background: #24a13b !important; color: #fff !important; }
+.pt-exec-board .pt-eb-kpis .pt-eb-kpi.tone-purple .pt-eb-icon { background: #812bc3 !important; color: #fff !important; }
+.pt-exec-board .pt-eb-kpis .pt-eb-kpi.tone-orange .pt-eb-icon { background: #fa7900 !important; color: #fff !important; }
+.pt-exec-board .pt-eb-kpis .pt-eb-kpi.tone-red .pt-eb-icon { background: #f02632 !important; color: #fff !important; }
+.pt-exec-board .pt-eb-kpis .pt-eb-kpi.tone-cyan .pt-eb-icon { background: #079ea6 !important; color: #fff !important; }
+.pt-exec-board .pt-eb-kpis .pt-eb-kpi.tone-indigo .pt-eb-icon { background: #2d5ada !important; color: #fff !important; }
+.pt-exec-board .pt-eb-kpis .pt-eb-kpi.tone-teal .pt-eb-icon { background: #eb0b68 !important; color: #fff !important; }
+.pt-exec-board .pt-eb-kpis .pt-eb-kpi.tone-yellow .pt-eb-icon { background: #d5a700 !important; color: #fff !important; }
+
 @media (max-width: 1200px) {
     .pt-exec-board .pt-eb-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
