@@ -7792,6 +7792,33 @@
     .pt-exec-board .pt-eb-kpis .pt-eb-kpi { min-height: 108px; }
 }
 
+/* Top créances : bleu client et rouge fournisseur, fixes quel que soit le thème. */
+.pt-exec-board .pt-eb-partner-kpis > .pt-eb-partner-kpi:first-child {
+    border-color: #cfe3ff !important;
+}
+.pt-exec-board .pt-eb-partner-kpis > .pt-eb-partner-kpi:nth-child(2) {
+    border-color: #ffd1d6 !important;
+}
+.pt-exec-board .pt-eb-partner-kpis > .pt-eb-partner-kpi:first-child .pt-eb-partner-total {
+    border-color: #bcdcff !important;
+    border-left: 5px solid #1683f5 !important;
+    background: linear-gradient(100deg, #f8fbff, #eaf4ff) !important;
+}
+.pt-exec-board .pt-eb-partner-kpis > .pt-eb-partner-kpi:nth-child(2) .pt-eb-partner-total {
+    border-color: #ffcbd1 !important;
+    border-left: 5px solid #f02632 !important;
+    background: linear-gradient(100deg, #fff8f8, #ffedf0) !important;
+}
+.pt-exec-board .pt-eb-partner-kpis > .pt-eb-partner-kpi:first-child .pt-eb-partner-total strong,
+.pt-exec-board .pt-eb-partner-kpis > .pt-eb-partner-kpi:first-child td strong { color: #0871d6 !important; }
+.pt-exec-board .pt-eb-partner-kpis > .pt-eb-partner-kpi:nth-child(2) .pt-eb-partner-total strong,
+.pt-exec-board .pt-eb-partner-kpis > .pt-eb-partner-kpi:nth-child(2) td strong { color: #c6101c !important; }
+.pt-exec-board .pt-eb-partner-kpis .pt-eb-status-pill.ok { background: #e8f7eb !important; color: #117a33 !important; }
+.pt-exec-board .pt-eb-partner-kpis .pt-eb-status-pill.warn { background: #fff4dc !important; color: #a86800 !important; }
+.pt-exec-board .pt-eb-partner-kpis .pt-eb-status-pill.danger { background: #ffe8ea !important; color: #c6101c !important; }
+.pt-exec-board .pt-eb-partner-kpis > .pt-eb-partner-kpi:first-child tbody tr:hover td { background: #f0f7ff !important; }
+.pt-exec-board .pt-eb-partner-kpis > .pt-eb-partner-kpi:nth-child(2) tbody tr:hover td { background: #fff3f4 !important; }
+
 @media (max-width: 760px) {
     .pt-exec-board {
         .stores .pt-eb-stores-scroll { max-height: 11.3rem; }
