@@ -1706,16 +1706,16 @@ class PrimetechDashboard(models.AbstractModel):
         daily_result = gross_margin_value / period_day_count
         return {
             'kpis': [
-                {'label': "Chiffre d'affaires", 'value': overview['revenue_total'], 'suffix': 'FCFA', 'trend': period_label, 'icon': 'fa fa-line-chart', 'tone': 'green', 'action': actions['sales']},
-                {'label': 'Marge brute', 'value': gross_margin_value, 'suffix': 'FCFA', 'trend': period_label, 'icon': 'fa fa-pie-chart', 'tone': 'orange', 'action': actions['sales']},
-                {'label': 'Résultat journalier', 'value': daily_result, 'suffix': 'FCFA', 'trend': f'Moyenne sur {period_day_count} jour(s)', 'icon': 'fa fa-cog', 'tone': 'blue', 'action': actions['finance']},
-                {'label': 'Total factures', 'value': global_invoice_total, 'suffix': 'FCFA', 'trend': period_label, 'icon': 'fa fa-file-text-o', 'tone': 'purple', 'action': open_model('Factures clients — ' + period_label, 'account.move', global_invoice_domain, {'search_default_posted': 1})},
-                {'label': 'Créances clients', 'value': global_receivable_total, 'suffix': 'FCFA', 'trend': period_label, 'icon': 'fa fa-money', 'tone': 'pink', 'action': open_model('Créances clients — ' + period_label, 'account.move', global_invoice_domain + [('amount_residual', '>', 0)], {'search_default_posted': 1})},
+                {'label': "Chiffre d'affaires", 'value': overview['revenue_total'], 'suffix': 'FCFA', 'trend': period_label, 'icon': 'fa fa-line-chart', 'tone': 'blue', 'action': actions['sales']},
+                {'label': 'Marge brute', 'value': gross_margin_value, 'suffix': 'FCFA', 'trend': period_label, 'icon': 'fa fa-pie-chart', 'tone': 'green', 'action': actions['sales']},
+                {'label': 'Résultat journalier', 'value': daily_result, 'suffix': 'FCFA', 'trend': f'Moyenne sur {period_day_count} jour(s)', 'icon': 'fa fa-cog', 'tone': 'purple', 'action': actions['finance']},
+                {'label': 'Total factures', 'value': global_invoice_total, 'suffix': 'FCFA', 'trend': period_label, 'icon': 'fa fa-file-text-o', 'tone': 'orange', 'action': open_model('Factures clients — ' + period_label, 'account.move', global_invoice_domain, {'search_default_posted': 1})},
+                {'label': 'Créances clients', 'value': global_receivable_total, 'suffix': 'FCFA', 'trend': period_label, 'icon': 'fa fa-money', 'tone': 'red', 'action': open_model('Créances clients — ' + period_label, 'account.move', global_invoice_domain + [('amount_residual', '>', 0)], {'search_default_posted': 1})},
                 {'label': 'Achats fournisseurs', 'value': purchase_total_confirmed, 'suffix': 'FCFA', 'trend': period_label, 'icon': 'fa fa-shopping-cart', 'tone': 'cyan', 'action': actions['purchase']},
                 {'label': 'Factures fournisseurs', 'value': supplier_bill_total, 'suffix': 'FCFA', 'trend': period_label, 'icon': 'fa fa-file-text', 'tone': 'indigo', 'action': supplier_bills_action},
                 {'label': 'Dettes fournisseurs', 'value': supplier_debt_total, 'suffix': 'FCFA', 'trend': period_label, 'icon': 'fa fa-credit-card', 'tone': 'teal', 'action': supplier_bills_action},
-                {'label': 'Paiements fournisseurs', 'value': supplier_payment_total, 'suffix': 'FCFA', 'trend': period_label, 'icon': 'fa fa-bank', 'tone': 'red', 'action': supplier_payments_action},
-                {'label': 'Fournisseurs actifs', 'value': len(active_supplier_ids), 'suffix': '', 'trend': period_label, 'icon': 'fa fa-users', 'tone': 'slate', 'action': supplier_action},
+                {'label': 'Paiements fournisseurs', 'value': supplier_payment_total, 'suffix': 'FCFA', 'trend': period_label, 'icon': 'fa fa-bank', 'tone': 'yellow', 'action': supplier_payments_action},
+                {'label': 'Fournisseurs actifs', 'value': len(active_supplier_ids), 'suffix': '', 'trend': period_label, 'icon': 'fa fa-users', 'tone': 'green', 'action': supplier_action},
             ],
             'stores': stores,
             'store_summary': store_summary,

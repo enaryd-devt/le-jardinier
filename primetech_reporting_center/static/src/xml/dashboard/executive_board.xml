@@ -24,6 +24,7 @@
                 <article t-att-class="'pt-eb-kpi tone-' + kpi.tone" t-on-click="() => this.openAction(kpi.action)">
                     <div class="pt-eb-icon"><i t-att-class="kpi.icon"/></div>
                     <div><span><t t-esc="kpi.label"/></span><strong class="pt-eb-kpi-value" t-att-title="format(kpi.value, kpi.suffix)" t-att-data-full-value="format(kpi.value, kpi.suffix)" t-att-data-compact-value="formatKpiValue(kpi.value, kpi.suffix)"><t t-esc="format(kpi.value, kpi.suffix)"/></strong><small><t t-esc="kpi.trend"/></small></div>
+                    <i class="pt-eb-kpi-spark" aria-hidden="true"/>
                 </article>
             </t>
         </section>
