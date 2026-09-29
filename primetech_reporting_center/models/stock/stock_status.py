@@ -16,6 +16,8 @@ class StockStatusReport(models.AbstractModel):
             domain.append(('id', 'in', filters['product_ids']))
         if filters.get('category_ids'):
             domain.append(('categ_id', 'child_of', filters['category_ids']))
+        if filters.get('supplier_ids'):
+            domain.append(('product_tmpl_id.seller_ids.partner_id', 'in', filters['supplier_ids']))
         products = Product.search(domain)
         total_products = 0
         total_qty = 0.0
@@ -24,6 +26,8 @@ class StockStatusReport(models.AbstractModel):
         out_of_stock = 0
         lines = []
         for product in products:
+            supplier_name = product.product_tmpl_id.seller_ids[:1].partner_id.name or 'Sans fournisseur'
+            product_name = product.display_name
             quant_domain = [('product_id', '=', product.id), ('location_id.usage', '=', 'internal')]
             if filters.get('location_ids'):
                 quant_domain.append(('location_id', 'in', filters['location_ids']))
@@ -60,6 +64,6 @@ class StockStatusReport(models.AbstractModel):
                 stock_state = 'faible'
             else:
                 stock_state = 'normal'
-            lines.append({'product_id': product.id, 'product_name': product.display_name, 'default_code': product.default_code or '', 'category': product.categ_id.display_name or '', 'location': locations, 'available_qty': round(available_qty, 2), 'qty_on_hand': round(qty, 2), 'reserved_qty': round(reserved, 2), 'incoming_qty': round(incoming_qty, 2), 'outgoing_qty': round(outgoing_qty, 2), 'cost_price': round(cost_price, 2), 'sale_price': round(sale_price, 2), 'value': round(value, 2), 'last_move_date': last_move.date.strftime('%d/%m/%Y') if last_move else '', 'state': stock_state})
-        lines = sorted(lines, key=lambda l: l['value'], reverse=True)
+            lines.append({'product_id': product.id, 'product_name': product_name, 'supplier_name': supplier_name, 'default_code': product.default_code or '', 'category': product.categ_id.display_name or '', 'location': locations, 'available_qty': round(available_qty, 2), 'qty_on_hand': round(qty, 2), 'reserved_qty': round(reserved, 2), 'incoming_qty': round(incoming_qty, 2), 'outgoing_qty': round(outgoing_qty, 2), 'cost_price': round(cost_price, 2), 'sale_price': round(sale_price, 2), 'value': round(value, 2), 'last_move_date': last_move.date.strftime('%d/%m/%Y') if last_move else '', 'state': stock_state})
+        lines = sorted(lines, key=lambda l: (l['supplier_name'], -l['value']) if filters.get('group_by_supplier') else -l['value'])
         return {'kpi': {'products_count': total_products, 'total_qty': round(total_qty, 2), 'reserved_qty': round(total_reserved, 2), 'stock_value': round(total_value, 2), 'out_of_stock': out_of_stock}, 'lines': lines}

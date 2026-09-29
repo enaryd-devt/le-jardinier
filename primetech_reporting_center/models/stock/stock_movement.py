@@ -21,6 +21,8 @@ class StockMovementReport(models.AbstractModel):
             domain.append(('product_id.categ_id', 'child_of', filters['category_ids']))
         if filters.get('lot_ids'):
             domain.append(('lot_id', 'in', filters['lot_ids']))
+        if filters.get('supplier_ids'):
+            domain.append(('move_id.partner_id', 'in', filters['supplier_ids']))
         if filters.get('validated_only'):
             domain.append(('state', '=', 'done'))
         move_lines = MoveLine.search(domain, order='\n                product_id,\n                date,\n                id\n            ')
@@ -34,17 +36,16 @@ class StockMovementReport(models.AbstractModel):
         move_lines = move_lines.sorted(key=lambda l: ((l.product_id.name or '').lower(), l.date, l.id))
         for line in move_lines:
             product = line.product_id
-            product_id = product.id
+            move = line.move_id
+            partner_name = move.partner_id.name if move.partner_id else ''
+            supplier_group = partner_name if line.location_id.usage == 'supplier' and partner_name else 'Autres mouvements'
+            product_id = (supplier_group, product.id) if filters.get('group_by_supplier') else product.id
             if product_id not in products:
                 products_count += 1
                 products[product_id] = {'product_id': product.id, 'product_name': product.name, 'default_code': product.default_code or '', 'category_name': product.categ_id.name or '', 'uom_name': product.uom_id.name or '', 'cost': product.standard_price, 'lines': [], 'total_in': 0.0, 'total_out': 0.0, 'balance': 0.0, 'valuation': 0.0}
             product_data = products[product_id]
-            move = line.move_id
             qty = abs(line.quantity or line.qty_done or 0.0)
             lot_name = line.lot_id.name if line.lot_id else 'SANS LOT'
-            partner_name = ''
-            if move.partner_id:
-                partner_name = move.partner_id.name
             source_usage = line.location_id.usage
             dest_usage = line.location_dest_id.usage
             lines_to_create = []

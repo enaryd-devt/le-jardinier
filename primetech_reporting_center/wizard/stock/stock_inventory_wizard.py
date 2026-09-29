@@ -10,6 +10,8 @@ class StockInventoryWizard(models.TransientModel):
     location_ids = fields.Many2many('stock.location', string='Emplacements')
     category_ids = fields.Many2many('product.category', string='Catégories')
     product_ids = fields.Many2many('product.product', string='Produits')
+    supplier_ids = fields.Many2many('res.partner', string='Fournisseurs', domain=[('supplier_rank', '>', 0)])
+    group_by_supplier = fields.Boolean(string='Regrouper par fournisseur')
     lot_ids = fields.Many2many('stock.lot', string='Lots')
     only_out_of_stock = fields.Boolean(string='Produits en rupture')
     only_out_of_stock_lots = fields.Boolean(string='Lots en rupture')
@@ -20,7 +22,7 @@ class StockInventoryWizard(models.TransientModel):
 
     def _prepare_filters(self):
         self.ensure_one()
-        return {'company_id': self.company_id.id, 'warehouse_ids': self.warehouse_ids.ids, 'location_ids': self.location_ids.ids, 'category_ids': self.category_ids.ids, 'product_ids': self.product_ids.ids, 'lot_ids': self.lot_ids.ids, 'only_out_of_stock': self.only_out_of_stock, 'only_out_of_stock_lots': self.only_out_of_stock_lots, 'only_negative_stock': self.only_negative_stock, 'only_with_lot': self.only_with_lot, 'only_without_lot': self.only_without_lot, 'observations': self.observations}
+        return {'company_id': self.company_id.id, 'warehouse_ids': self.warehouse_ids.ids, 'location_ids': self.location_ids.ids, 'category_ids': self.category_ids.ids, 'product_ids': self.product_ids.ids, 'supplier_ids': self.supplier_ids.ids, 'group_by_supplier': self.group_by_supplier, 'lot_ids': self.lot_ids.ids, 'only_out_of_stock': self.only_out_of_stock, 'only_out_of_stock_lots': self.only_out_of_stock_lots, 'only_negative_stock': self.only_negative_stock, 'only_with_lot': self.only_with_lot, 'only_without_lot': self.only_without_lot, 'observations': self.observations}
 
     def action_preview(self):
         self.ensure_one()

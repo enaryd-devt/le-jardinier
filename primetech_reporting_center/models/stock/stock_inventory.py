@@ -18,7 +18,8 @@ class StockInventoryReport(models.AbstractModel):
             quant_domain.append(('location_id', 'in', filters['location_ids']))
         if filters.get('lot_ids'):
             quant_domain.append(('lot_id', 'in', filters['lot_ids']))
-        quant_domain = [('location_id.usage', '=', 'internal')]
+        if filters.get('supplier_ids'):
+            quant_domain.append(('product_id.product_tmpl_id.seller_ids.partner_id', 'in', filters['supplier_ids']))
         quants = Quant.search(quant_domain)
         quants = quants.sorted(key=lambda q: ((q.location_id.display_name or '').lower(), (q.product_id.categ_id.name or '').lower(), (q.product_id.name or '').lower(), (q.lot_id.name or '').lower()))
         products_count = 0
@@ -31,6 +32,7 @@ class StockInventoryReport(models.AbstractModel):
         product_tracker = {}
         for quant in quants:
             product = quant.product_id
+            supplier_name = product.product_tmpl_id.seller_ids[:1].partner_id.name or 'Sans fournisseur'
             qty_available = quant.quantity
             qty_reserved = quant.reserved_quantity
             lot = quant.lot_id
@@ -57,7 +59,7 @@ class StockInventoryReport(models.AbstractModel):
             location_name = quant.location_id.display_name or quant.location_id.name
             category_name = product.categ_id.display_name or 'Sans Catégorie'
             lot_name = lot.name if lot else 'SANS LOT'
-            product_key = (warehouse_name, location_name, category_name, product.id)
+            product_key = (warehouse_name, location_name, category_name, supplier_name if filters.get('group_by_supplier') else '', product.id)
             if product_key not in product_tracker:
                 product_tracker[product_key] = 0
                 products_count += 1
@@ -66,7 +68,8 @@ class StockInventoryReport(models.AbstractModel):
             inventory.setdefault(warehouse_name, {})
             inventory[warehouse_name].setdefault(location_name, {})
             inventory[warehouse_name][location_name].setdefault(category_name, [])
-            inventory[warehouse_name][location_name][category_name].append({'product_id': product.id, 'product_name': product.name, 'default_code': product.default_code or '', 'lot_name': lot_name, 'qty_available': round(qty_available, 2), 'qty_reserved': round(qty_reserved, 2), 'first_line': first_line})
+            product_name = product.name
+            inventory[warehouse_name][location_name][category_name].append({'product_id': product.id, 'product_name': product_name, 'default_code': product.default_code or '', 'lot_name': lot_name, 'qty_available': round(qty_available, 2), 'qty_reserved': round(qty_reserved, 2), 'first_line': first_line})
         product_totals = {}
         for warehouse_data in inventory.values():
             for location_data in warehouse_data.values():

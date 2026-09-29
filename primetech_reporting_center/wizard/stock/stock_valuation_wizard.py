@@ -11,12 +11,14 @@ class StockValuationWizard(models.TransientModel):
     location_ids = fields.Many2many('stock.location', string='Emplacements')
     category_ids = fields.Many2many('product.category', string='Catégories')
     product_ids = fields.Many2many('product.product', string='Produits')
+    supplier_ids = fields.Many2many('res.partner', string='Fournisseurs', domain=[('supplier_rank', '>', 0)])
+    group_by_supplier = fields.Boolean(string='Regrouper par fournisseur')
     only_available = fields.Boolean(string='Stock positif uniquement')
     observations = fields.Text(string='Observations')
 
     def _prepare_filters(self):
         self.ensure_one()
-        return {'company_id': self.company_id.id, 'warehouse_ids': self.warehouse_ids.ids, 'location_ids': self.location_ids.ids, 'category_ids': self.category_ids.ids, 'product_ids': self.product_ids.ids, 'only_available': self.only_available, 'observations': self.observations}
+        return {'company_id': self.company_id.id, 'warehouse_ids': self.warehouse_ids.ids, 'location_ids': self.location_ids.ids, 'category_ids': self.category_ids.ids, 'product_ids': self.product_ids.ids, 'supplier_ids': self.supplier_ids.ids, 'group_by_supplier': self.group_by_supplier, 'only_available': self.only_available, 'observations': self.observations}
 
     def action_preview(self):
         self.ensure_one()

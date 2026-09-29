@@ -117,7 +117,12 @@
           </tr>
         </thead>
         <tbody>
+          <t t-set="last_supplier" t-value="False"/>
           <t t-foreach="data['lines']" t-as="line">
+            <t t-if="wizard.group_by_supplier and line['supplier_name'] != last_supplier">
+              <tr><td colspan="12" style="background:#e8f1ff; font-weight:700; padding:8px;">Fournisseur : <t t-esc="line['supplier_name']"/></td></tr>
+              <t t-set="last_supplier" t-value="line['supplier_name']"/>
+            </t>
             <tr>
               <td style="border:1px solid #000; padding:5px;">
                 <strong>

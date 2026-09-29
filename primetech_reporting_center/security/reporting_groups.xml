@@ -66,10 +66,10 @@
     <field name="category_id" ref="module_category_reporting_center"/>
     <field name="implied_ids" eval="[
         (4, ref('group_reporting_dashboard')),
-        (4, ref('group_reporting_accounting_manager')),
+        (4, ref('group_reporting_accounting')),
         (4, ref('group_reporting_sales')),
-        (4, ref('group_reporting_purchase_manager')),
-        (4, ref('group_reporting_stock_manager')),
+        (4, ref('group_reporting_purchase')),
+        (4, ref('group_reporting_stock')),
         (4, ref('group_reporting_hr'))
     ]"/>
   </record>

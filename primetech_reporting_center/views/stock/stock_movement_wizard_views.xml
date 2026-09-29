@@ -47,6 +47,8 @@
             <field name="warehouse_ids" widget="many2many_tags"/>
             <field name="category_ids" widget="many2many_tags"/>
             <field name="product_ids" widget="many2many_tags"/>
+            <field name="supplier_ids" widget="many2many_tags"/>
+            <field name="group_by_supplier"/>
             <field name="lot_ids" widget="many2many_tags"/>
           </group>
           <!-- ===================================== -->
