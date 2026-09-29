@@ -7819,6 +7819,64 @@
 .pt-exec-board .pt-eb-partner-kpis > .pt-eb-partner-kpi:first-child tbody tr:hover td { background: #f0f7ff !important; }
 .pt-exec-board .pt-eb-partner-kpis > .pt-eb-partner-kpi:nth-child(2) tbody tr:hover td { background: #fff3f4 !important; }
 
+/* Flux logistiques : palette fixe de la référence, sans héritage du thème Odoo. */
+.pt-exec-board .pt-eb-logistics-status > .pt-eb-logistics-flow:nth-child(1) { border-color: #d5e9ff !important; background: linear-gradient(145deg, #fff 4%, #edf8ff 100%) !important; }
+.pt-exec-board .pt-eb-logistics-status > .pt-eb-logistics-flow:nth-child(2) { border-color: #e6d7ff !important; background: linear-gradient(145deg, #fff 4%, #f7f0ff 100%) !important; }
+.pt-exec-board .pt-eb-logistics-status > .pt-eb-logistics-flow:nth-child(3) { border-color: #ffd8dc !important; background: linear-gradient(145deg, #fff 4%, #fff1f3 100%) !important; }
+
+.pt-exec-board .pt-eb-logistics-status > .pt-eb-logistics-flow:nth-child(1) .pt-eb-logistics-flow-header h3 > i { color: #1683f5 !important; }
+.pt-exec-board .pt-eb-logistics-status > .pt-eb-logistics-flow:nth-child(2) .pt-eb-logistics-flow-header h3 > i { color: #7c3aed !important; }
+.pt-exec-board .pt-eb-logistics-status > .pt-eb-logistics-flow:nth-child(3) .pt-eb-logistics-flow-header h3 > i { color: #f02632 !important; }
+.pt-exec-board .pt-eb-logistics-status .pt-eb-flow-pill.primary { background: #dcecff !important; color: #1767df !important; }
+.pt-exec-board .pt-eb-logistics-status .pt-eb-flow-pill.info { background: #eee3ff !important; color: #7833d8 !important; }
+.pt-exec-board .pt-eb-logistics-status .pt-eb-flow-pill.success { background: #ffe0e4 !important; color: #ef2632 !important; }
+
+.pt-exec-board .pt-eb-logistics-status > .pt-eb-logistics-flow:nth-child(1) .pt-eb-logistics-donut { background: conic-gradient(#1558ee 0 28%, #24bdea 28% 51%, #42c7ef 51% 75%, #80d8f5 75% 100%) !important; }
+.pt-exec-board .pt-eb-logistics-status > .pt-eb-logistics-flow:nth-child(2) .pt-eb-logistics-donut { background: conic-gradient(#5920c7 0 28%, #7137e5 28% 52%, #9a61f2 52% 76%, #d7baff 76% 100%) !important; }
+.pt-exec-board .pt-eb-logistics-status > .pt-eb-logistics-flow:nth-child(3) .pt-eb-logistics-donut { background: conic-gradient(#d9172b 0 28%, #ff5945 28% 52%, #ff7947 52% 76%, #ffbea0 76% 100%) !important; }
+.pt-exec-board .pt-eb-logistics-status .pt-eb-logistics-donut strong,
+.pt-exec-board .pt-eb-logistics-status .pt-eb-logistics-donut span { background: #fff !important; color: #10254c !important; }
+
+.pt-exec-board .pt-eb-logistics-status .pt-eb-logistics-status-row.tone-warning { --pt-logistics-color: #ffab00 !important; --pt-logistics-soft: #fff8e8 !important; }
+.pt-exec-board .pt-eb-logistics-status .pt-eb-logistics-status-row.tone-info { --pt-logistics-color: #1683f5 !important; --pt-logistics-soft: #edf6ff !important; }
+.pt-exec-board .pt-eb-logistics-status .pt-eb-logistics-status-row.tone-primary { --pt-logistics-color: #7c3aed !important; --pt-logistics-soft: #f4efff !important; }
+.pt-exec-board .pt-eb-logistics-status .pt-eb-logistics-status-row.tone-success { --pt-logistics-color: #04a83d !important; --pt-logistics-soft: #edfff1 !important; }
+.pt-exec-board .pt-eb-logistics-status .pt-eb-logistics-status-row.tone-danger { --pt-logistics-color: #f02632 !important; --pt-logistics-soft: #fff0f2 !important; }
+
+/* Journal d'audit et performance : couleurs métier fixes de la référence. */
+.pt-exec-board .pt-eb-unified-history { border-color: #d5e7ff !important; background: linear-gradient(145deg, #fff, #f8fbff) !important; }
+.pt-exec-board .pt-eb-unified-history .pt-eb-history-header h3 i { color: #11933d !important; }
+.pt-exec-board .pt-eb-unified-history .pt-eb-history-table thead th { background: #f0f6ff !important; color: #46628d !important; }
+.pt-exec-board .pt-eb-unified-history .pt-eb-history-table tbody tr:has(.pt-eb-event-badge.success) td { background: #f1fff4 !important; }
+.pt-exec-board .pt-eb-unified-history .pt-eb-history-table tbody tr:has(.pt-eb-event-badge.warning) td { background: #fff8ea !important; }
+.pt-exec-board .pt-eb-unified-history .pt-eb-history-table tbody tr:has(.pt-eb-event-badge.info) td { background: #f0f7ff !important; }
+.pt-exec-board .pt-eb-unified-history .pt-eb-history-table tbody tr:has(.pt-eb-event-badge.purple) td { background: #f7f0ff !important; }
+.pt-exec-board .pt-eb-history-source { background: #fff0d6 !important; color: #ef6500 !important; }
+.pt-exec-board .pt-eb-history-source.success { background: #e5f9ea !important; color: #078a38 !important; }
+.pt-exec-board .pt-eb-event-badge.success { background: #dff8e6 !important; color: #078a38 !important; }
+.pt-exec-board .pt-eb-event-badge.warning { background: #fff1c9 !important; color: #b86a00 !important; }
+.pt-exec-board .pt-eb-event-badge.info { background: #dff0ff !important; color: #1474df !important; }
+.pt-exec-board .pt-eb-event-badge.purple { background: #eadcff !important; color: #7134d2 !important; }
+
+.pt-exec-board .pt-eb-performance-actions { border-color: #ccebdd !important; background: linear-gradient(145deg, #fff, #f7fffb) !important; }
+.pt-exec-board .pt-eb-performance-actions > h3 { color: #13295a !important; }
+.pt-exec-board .pt-eb-performance-actions .pt-eb-perf:nth-of-type(1) { background: #eafff2 !important; }
+.pt-exec-board .pt-eb-performance-actions .pt-eb-perf:nth-of-type(2) { background: #edf6ff !important; }
+.pt-exec-board .pt-eb-performance-actions .pt-eb-perf:nth-of-type(3) { background: #fff4e9 !important; }
+.pt-exec-board .pt-eb-performance-actions .pt-eb-perf:nth-of-type(4) { background: #f4edff !important; }
+.pt-exec-board .pt-eb-performance-actions .pt-eb-perf:nth-of-type(1) > i:first-child,
+.pt-exec-board .pt-eb-performance-actions .pt-eb-perf:nth-of-type(1) strong { color: #07933b !important; }
+.pt-exec-board .pt-eb-performance-actions .pt-eb-perf:nth-of-type(2) > i:first-child,
+.pt-exec-board .pt-eb-performance-actions .pt-eb-perf:nth-of-type(2) strong { color: #147bf2 !important; }
+.pt-exec-board .pt-eb-performance-actions .pt-eb-perf:nth-of-type(3) > i:first-child,
+.pt-exec-board .pt-eb-performance-actions .pt-eb-perf:nth-of-type(3) strong { color: #f05a16 !important; }
+.pt-exec-board .pt-eb-performance-actions .pt-eb-perf:nth-of-type(4) > i:first-child,
+.pt-exec-board .pt-eb-performance-actions .pt-eb-perf:nth-of-type(4) strong { color: #7e22e8 !important; }
+.pt-exec-board .pt-eb-performance-actions .pt-eb-perf:nth-of-type(1) b i { background: #07933b !important; }
+.pt-exec-board .pt-eb-performance-actions .pt-eb-perf:nth-of-type(2) b i { background: #147bf2 !important; }
+.pt-exec-board .pt-eb-performance-actions .pt-eb-perf:nth-of-type(3) b i { background: #f05a16 !important; }
+.pt-exec-board .pt-eb-performance-actions .pt-eb-perf:nth-of-type(4) b i { background: #7e22e8 !important; }
+
 @media (max-width: 760px) {
     .pt-exec-board {
         .stores .pt-eb-stores-scroll { max-height: 11.3rem; }
