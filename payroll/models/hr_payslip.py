@@ -3,7 +3,8 @@
 import logging
 import math
 from collections import defaultdict
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
+from html import escape
 
 import babel
 from dateutil.relativedelta import relativedelta
@@ -11,6 +12,7 @@ from pytz import timezone
 
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
+from odoo.tools.misc import format_amount
 
 from .base_browsable import (
     BaseBrowsableObject,
@@ -105,6 +107,16 @@ class HrPayslip(models.Model):
         ),
         tracking=True,
     )
+    period_worked_days = fields.Float(
+        string="Jours travaillés sur la période",
+        compute="_compute_period_worked_time",
+        help="Nombre de jours de travail planifiés entre les deux dates du bulletin.",
+    )
+    period_worked_hours = fields.Float(
+        string="Heures travaillées sur la période",
+        compute="_compute_period_worked_time",
+        help="Nombre d'heures de travail planifiées entre les deux dates du bulletin.",
+    )
     state = fields.Selection(
         [
             ("draft", "Draft"),
@@ -178,6 +190,13 @@ class HrPayslip(models.Model):
         "hr.payslip.line",
         compute="_compute_dynamic_filtered_payslip_lines",
     )
+    salary_kpi_html = fields.Html(
+        string="Synthèse des structures salariales",
+        compute="_compute_salary_kpi_html",
+        store=True,
+        sanitize=False,
+        readonly=True,
+    )
     credit_note = fields.Boolean(
         readonly=True,
         help="Indicates this payslip has a refund of another",
@@ -231,6 +250,111 @@ class HrPayslip(models.Model):
                 lines = lines.filtered(lambda line: line.appears_on_payslip)
             payslip.dynamic_filtered_payslip_lines = lines
 
+    @api.depends(
+        "line_ids",
+        "line_ids.total",
+        "line_ids.category_id",
+        "line_ids.category_id.name",
+        "line_ids.category_id.code",
+        "line_ids.sequence",
+        "struct_id",
+        "struct_ids",
+    )
+    def _compute_salary_kpi_html(self):
+        """Build the salary-calculation KPI cards from the computed rules.
+
+        One card is rendered for every effective salary structure.  Rules are
+        attributed to the structure that owns them directly, which keeps the
+        summary meaningful when base and complementary structures are combined.
+        """
+        for payslip in self:
+            structures = payslip._get_salary_structures_with_parents()
+            if not payslip.line_ids or not structures:
+                payslip.salary_kpi_html = (
+                    '<div class="alert alert-info mb-3">'
+                    'Calculez le bulletin pour afficher la synthèse salariale.'
+                    "</div>"
+                )
+                continue
+
+            currency = payslip.contract_id.currency_id or payslip.company_id.currency_id
+            cards = []
+            kpi_count = len(structures) + 1  # one additional card for the net
+            if kpi_count <= 3:
+                card_basis, value_size = 300, "1.55rem"
+            elif kpi_count <= 5:
+                card_basis, value_size = 230, "1.35rem"
+            elif kpi_count <= 8:
+                card_basis, value_size = 190, "1.15rem"
+            else:
+                card_basis, value_size = 165, "1rem"
+            for index, structure in enumerate(structures):
+                lines = payslip.line_ids.filtered(
+                    lambda line, structure=structure: line.salary_rule_id in structure.rule_ids
+                )
+                gains = sum(lines.filtered(lambda line: line.total > 0).mapped("total"))
+                deductions = sum(lines.filtered(lambda line: line.total < 0).mapped("total"))
+                net_lines = lines.filtered(
+                    lambda line: (line.code or "").upper() in {"NET", "NETPAY"}
+                    or (line.category_id.code or "").upper() in {"NET", "NETPAY"}
+                )
+                result = sum(net_lines.mapped("total")) if net_lines else gains + deductions
+                palette = ("primary", "success", "warning", "info", "secondary")[index % 5]
+                result_class = "text-danger" if result < 0 else f"text-{palette}"
+                cards.append(
+                    '<div style="flex:1 1 %dpx; min-width:155px;">'
+                    '<div class="card h-100 border-0 shadow-sm bg-light border-start border-4 border-%s">'
+                    '<div class="card-body py-3">'
+                    '<div class="text-muted text-uppercase small fw-bold">%s</div>'
+                    '<div class="%s fw-bold mt-1" style="font-size:%s;">%s</div>'
+                    '<div class="small text-muted mt-2">%s&nbsp;·&nbsp;%s</div>'
+                    '</div></div></div>'
+                    % (
+                        card_basis,
+                        palette,
+                        escape(structure.name),
+                        result_class,
+                        value_size,
+                        escape(format_amount(payslip.env, result, currency)),
+                        _("Gains : %s") % escape(format_amount(payslip.env, gains, currency)),
+                        _("Retenues : %s") % escape(format_amount(payslip.env, deductions, currency)),
+                    )
+                )
+
+            net_lines = payslip.line_ids.filtered(
+                lambda line: (line.code or "").upper() in {"NET", "NETPAY"}
+                or (line.category_id.code or "").upper() in {"NET", "NETPAY"}
+            )
+            if net_lines:
+                net_to_pay = sum(net_lines.mapped("total"))
+            else:
+                net_to_pay = sum(payslip.line_ids.filtered(
+                    lambda line: (line.code or "").upper() not in {"GROSS", "NET", "NETPAY"}
+                    and (line.category_id.code or "").upper() not in {"GROSS", "NET", "NETPAY"}
+                ).mapped("total"))
+            cards.append(
+                '<div style="flex:1 1 %dpx; min-width:155px;">'
+                '<div class="card h-100 border-0 shadow-sm border-start border-4 border-success bg-success-subtle">'
+                '<div class="card-body py-3">'
+                '<div class="text-success text-uppercase small fw-bold">%s</div>'
+                '<div class="text-success fw-bold mt-1" style="font-size:%s;">%s</div>'
+                '<div class="small text-muted mt-2">%s</div>'
+                '</div></div></div>'
+                % (
+                    card_basis,
+                    escape(_("Net à payer")),
+                    value_size,
+                    escape(format_amount(payslip.env, net_to_pay, currency)),
+                    escape(_("Montant net du bulletin")),
+                )
+            )
+            payslip.salary_kpi_html = (
+                '<div class="mb-2 text-muted small"><strong>Structures appliquées :</strong> %s</div>'
+                '<div class="d-flex flex-nowrap gap-3 mb-3" '
+                'style="overflow-x:auto; align-items:stretch;">%s</div>'
+                % (escape(", ".join(structures.mapped("name"))), "".join(cards))
+            )
+
     def _compute_payslip_count(self):
         for payslip in self:
             payslip.payslip_count = len(payslip.line_ids)
@@ -241,6 +365,41 @@ class HrPayslip(models.Model):
             raise ValidationError(
                 _("Payslip 'Date From' must be earlier than 'Date To'.")
             )
+
+    @api.constrains("employee_id", "date_from", "date_to", "state")
+    def _check_period_not_already_paid(self):
+        """A partial payment must complement a period, never pay it twice."""
+        for payslip in self:
+            # A refund is deliberately a reversal of an already paid period.
+            if payslip.credit_note or not (
+                payslip.employee_id and payslip.date_from and payslip.date_to
+            ):
+                continue
+            duplicate = self.search_count([
+                ("id", "!=", payslip.id),
+                ("employee_id", "=", payslip.employee_id.id),
+                ("state", "!=", "cancel"),
+                ("credit_note", "=", False),
+                ("date_from", "<=", payslip.date_to),
+                ("date_to", ">=", payslip.date_from),
+            ])
+            if duplicate:
+                raise ValidationError(_(
+                    "Cette période chevauche déjà un bulletin existant pour cet employé. "
+                    "Choisissez uniquement les jours restant à régler."
+                ))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._compute_name()
+        return records
+
+    def write(self, vals):
+        result = super().write(vals)
+        if {"employee_id", "date_from", "date_to"}.intersection(vals):
+            self._compute_name()
+        return result
 
     def copy(self, default=None):
         rec = super().copy(default)
@@ -348,6 +507,9 @@ class HrPayslip(models.Model):
                     "compute_date": fields.Date.today(),
                 }
             )
+            # The dashboard is stored so it must be refreshed explicitly
+            # after the old lines have been replaced by the computed ones.
+            payslip._compute_salary_kpi_html()
         return True
 
     @api.model
@@ -454,20 +616,14 @@ class HrPayslip(models.Model):
         }
 
     def _get_work_time_proration(self, contract):
-        """Compute the selected-period ratio against the normal calendar month."""
+        """Compute a salary ratio from the actual working time selected.
+
+        The reference is the employee's payroll cycle, anchored on the contract
+        start date.  Consequently, several consecutive partial payslips add up
+        to one complete salary without relying on the calendar month boundary.
+        """
         self.ensure_one()
         if not (self.date_from and self.date_to and contract.resource_calendar_id):
-            return 1.0
-        month_start = self.date_from.replace(day=1)
-        month_end = month_start + relativedelta(months=1, days=-1)
-        month_data = contract.employee_id._get_work_days_data_batch(
-            datetime.combine(month_start, time.min),
-            datetime.combine(month_end, time.max),
-            calendar=contract.resource_calendar_id,
-            compute_leaves=False,
-        )
-        monthly_hours = month_data[contract.employee_id.id]["hours"]
-        if not monthly_hours:
             return 1.0
         period_start = max(self.date_from, contract.date_start)
         period_end = self.date_to
@@ -475,15 +631,83 @@ class HrPayslip(models.Model):
             period_end = min(period_end, contract.date_end)
         if period_start > period_end:
             return 0.0
-        period_data = contract.employee_id._get_work_days_data_batch(
-            datetime.combine(period_start, time.min),
-            datetime.combine(period_end, time.max),
-            calendar=contract.resource_calendar_id,
-            compute_leaves=False,
-        )
-        payable_hours = period_data[contract.employee_id.id]["hours"]
-        # A selected period can never exceed one normal calendar month.
-        return min(max(payable_hours / monthly_hours, 0.0), 1.0)
+
+        ratio = 0.0
+        cursor = period_start
+        while cursor <= period_end:
+            cycle_start, cycle_end = self._get_payment_cycle_bounds(contract, cursor)
+            selected_end = min(period_end, cycle_end)
+            cycle_data = contract.employee_id._get_work_days_data_batch(
+                datetime.combine(cycle_start, time.min),
+                datetime.combine(cycle_end, time.max),
+                calendar=contract.resource_calendar_id,
+                compute_leaves=False,
+            )
+            selected_data = contract.employee_id._get_work_days_data_batch(
+                datetime.combine(cursor, time.min),
+                datetime.combine(selected_end, time.max),
+                calendar=contract.resource_calendar_id,
+                compute_leaves=False,
+            )
+            cycle_hours = cycle_data[contract.employee_id.id]["hours"]
+            if cycle_hours:
+                ratio += selected_data[contract.employee_id.id]["hours"] / cycle_hours
+            cursor = selected_end + timedelta(days=1)
+        return max(ratio, 0.0)
+
+    def _get_payment_cycle_bounds(self, contract, target_date):
+        """Return the salary cycle containing ``target_date``.
+
+        Monthly cycles deliberately start on the contract anniversary date.  A
+        contract that starts on 12 June therefore has a cycle from 12 June to
+        11 July; an advance and its complement are calculated from that same
+        reference period.
+        """
+        start = contract.date_start
+        frequency = contract.schedule_pay or "monthly"
+        if frequency == "weekly":
+            step = relativedelta(weeks=1)
+        elif frequency == "bi-weekly":
+            step = relativedelta(weeks=2)
+        elif frequency == "bi-monthly":
+            step = relativedelta(months=2)
+        elif frequency == "quarterly":
+            step = relativedelta(months=3)
+        elif frequency == "semi-annually":
+            step = relativedelta(months=6)
+        elif frequency == "annually":
+            step = relativedelta(years=1)
+        else:
+            step = relativedelta(months=1)
+
+        cycle_start = start
+        while cycle_start + step <= target_date:
+            cycle_start += step
+        cycle_end = cycle_start + step - timedelta(days=1)
+        if contract.date_end:
+            cycle_end = min(cycle_end, contract.date_end)
+        return cycle_start, cycle_end
+
+    @api.depends("employee_id", "contract_id", "date_from", "date_to")
+    def _compute_period_worked_time(self):
+        for payslip in self:
+            payslip.period_worked_days = 0.0
+            payslip.period_worked_hours = 0.0
+            contract = payslip.contract_id or payslip._get_employee_contracts()[:1]
+            if not (contract and payslip.date_from and payslip.date_to):
+                continue
+            start = max(payslip.date_from, contract.date_start)
+            end = min(payslip.date_to, contract.date_end or payslip.date_to)
+            if start > end or not contract.resource_calendar_id:
+                continue
+            data = contract.employee_id._get_work_days_data_batch(
+                datetime.combine(start, time.min),
+                datetime.combine(end, time.max),
+                calendar=contract.resource_calendar_id,
+                compute_leaves=False,
+            )[contract.employee_id.id]
+            payslip.period_worked_days = data["days"]
+            payslip.period_worked_hours = data["hours"]
 
     @api.model
     def get_inputs(self, contracts, date_from, date_to):
@@ -857,6 +1081,7 @@ class HrPayslip(models.Model):
             for line in worked_days_line_ids:
                 worked_days_lines += worked_days_lines.new(line)
             payslip.worked_days_line_ids = worked_days_lines
+            payslip._compute_name()
 
     @api.onchange("employee_id", "date_from", "date_to")
     def onchange_employee(self):
@@ -905,14 +1130,19 @@ class HrPayslip(models.Model):
 
     def _compute_name(self):
         for record in self:
-            date_formatted = babel.dates.format_date(
-                date=datetime.combine(record.date_from, time.min),
-                format="MMMM-y",
-                locale=record.env.context.get("lang") or "en_US",
+            if not (record.employee_id and record.date_from and record.date_to):
+                continue
+            locale = record.env.context.get("lang") or "en_US"
+            date_from = babel.dates.format_date(
+                date=record.date_from, format="short", locale=locale
             )
-            record.name = _("Salary Slip of %(name)s for %(dt)s") % {
+            date_to = babel.dates.format_date(
+                date=record.date_to, format="short", locale=locale
+            )
+            record.name = _("Bulletin de paie de %(name)s — du %(date_from)s au %(date_to)s") % {
                 "name": record.employee_id.name,
-                "dt": str(date_formatted),
+                "date_from": str(date_from),
+                "date_to": str(date_to),
             }
 
     @api.onchange("contract_id")

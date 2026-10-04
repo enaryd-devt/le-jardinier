@@ -170,6 +170,8 @@
                                 />
                             </div>
                             <field name="date_to" invisible="True" />
+                            <field name="period_worked_days" readonly="1" />
+                            <field name="period_worked_hours" readonly="1" />
                             <field
                                 name="contract_id"
                                 domain="[('employee_id','=',employee_id),('date_start','&lt;=',date_to),'|',('date_end','&gt;=',date_from),('date_end','=',False)]"
@@ -266,6 +268,12 @@
                             </field>
                         </page>
                         <page name="computation" string="Salary Computation">
+                            <field
+                                name="salary_kpi_html"
+                                widget="html"
+                                nolabel="1"
+                                readonly="1"
+                            />
                             <group>
                                 <field
                                     name="hide_child_lines"
