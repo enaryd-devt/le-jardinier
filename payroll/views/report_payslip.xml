@@ -50,6 +50,10 @@
                     .pt-payroll-slip .pt-totals .pt-net { border: 2px solid #111; background: #dedede; }
                     .pt-payroll-slip .pt-totals .pt-net strong { font-size: 16px; }
                     .pt-payroll-slip .pt-note { margin-top: 9px; padding: 6px; border: 1px solid #aaa; page-break-inside: avoid; }
+                    .pt-payroll-slip .pt-signatures { margin-top: 30px; page-break-inside: avoid; }
+                    .pt-payroll-slip .pt-signatures td { width: 33.33%; padding: 0 15px; text-align: center; vertical-align: top; }
+                    .pt-payroll-slip .pt-signature-title { display: block; color: #111; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+                    .pt-payroll-slip .pt-signature-line { display: block; height: 48px; margin-top: 8px; border-bottom: 1px solid #555; }
                 </style>
 
                 <t t-set="structure_groups" t-value="o._get_report_structure_groups()"/>
@@ -86,8 +90,6 @@
                             <tr>
                                 <td class="pt-slip-meta-left">
                                     <div class="pt-meta-row"><span class="pt-meta-label">Période</span><span class="pt-meta-separator">:</span><span class="pt-meta-value">Du <span t-field="o.date_from"/> au <span t-field="o.date_to"/></span></div>
-                                    <div class="pt-meta-row"><span class="pt-meta-label">Date de paiement</span><span class="pt-meta-separator">:</span><span class="pt-meta-value" t-field="o.date_to"/></div>
-                                    <div class="pt-meta-row"><span class="pt-meta-label">Mode de règlement</span><span class="pt-meta-separator">:</span><strong class="pt-meta-value" t-if="o.payment_journal_id" t-field="o.payment_journal_id.name"/><span class="pt-meta-value" t-else="">Non renseigné</span></div>
                                     <div class="pt-meta-row pt-slip-number">
                                         <span class="pt-meta-label">N° du bulletin</span><span class="pt-meta-separator">:</span><strong class="pt-meta-value" t-field="o.number" t-att-style="'color: %s;' % theme_primary"/>
                                     </div>
@@ -159,6 +161,25 @@
                 <div class="pt-note" t-if="o.note">
                     <strong>Observations :</strong> <span t-field="o.note"/>
                 </div>
+
+                <table class="pt-signatures">
+                    <tbody>
+                        <tr>
+                            <td>
+                                <span class="pt-signature-title">Le Responsable RH</span>
+                                <span class="pt-signature-line"/>
+                            </td>
+                            <td>
+                                <span class="pt-signature-title">La Caisse</span>
+                                <span class="pt-signature-line"/>
+                            </td>
+                            <td>
+                                <span class="pt-signature-title">L'Employé</span>
+                                <span class="pt-signature-line"/>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </t>
     </template>

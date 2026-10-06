@@ -247,6 +247,21 @@ class HrSalaryRule(models.Model):
             "worked_days", "categories.", "rules.",
         ))
 
+    def _uses_prorated_wage(self):
+        """Whether the rule already receives the prorated negotiated wage."""
+        self.ensure_one()
+        expression = " ".join(filter(None, [
+            self.quantity,
+            self.amount_percentage_base,
+            self.amount_python_compute,
+        ]))
+        return (
+            self.percentage_base_source == "contract_wage"
+            or "contract.wage" in expression
+            or "current_contract.base_salary" in expression
+            or "current_contract.prorated_wage" in expression
+        )
+
     def _compute_require_code_and_category(self):
         require = (
             self.env["ir.config_parameter"]

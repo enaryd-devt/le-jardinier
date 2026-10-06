@@ -14,3 +14,8 @@ dgi_tva_ir_line_definition_manager,dgi.tva.ir.line.definition.manager,model_prim
 dgi_tva_ir_section_user,dgi.tva.ir.section.user,model_primetech_dgi_tva_ir_section,primetech_tax_automation.group_tax_user,1,0,0,0
 dgi_tva_ir_section_preparer,dgi.tva.ir.section.preparer,model_primetech_dgi_tva_ir_section,primetech_tax_automation.group_tax_preparer,1,1,1,0
 dgi_tva_ir_section_manager,dgi.tva.ir.section.manager,model_primetech_dgi_tva_ir_section,primetech_tax_automation.group_tax_manager,1,1,1,1
+dsf_mapping_preparer,dsf.mapping.preparer,model_primetech_dsf_mapping,primetech_tax_automation.group_tax_preparer,1,1,1,0
+dsf_mapping_manager,dsf.mapping.manager,model_primetech_dsf_mapping,primetech_tax_automation.group_tax_manager,1,1,1,1
+dsf_generation_wizard_preparer,dsf.generation.wizard.preparer,model_primetech_dsf_generation_wizard,primetech_tax_automation.group_tax_preparer,1,1,1,1
+dsf_template_cell_preparer,dsf.template.cell.preparer,model_primetech_dsf_template_cell,primetech_tax_automation.group_tax_preparer,1,0,0,0
+dsf_template_cell_manager,dsf.template.cell.manager,model_primetech_dsf_template_cell,primetech_tax_automation.group_tax_manager,1,0,0,0

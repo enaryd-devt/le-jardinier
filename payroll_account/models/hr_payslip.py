@@ -3,7 +3,7 @@
 import logging
 
 from odoo import _, api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +47,39 @@ class HrPayslip(models.Model):
                 payslip.move_id._reverse_moves()
                 payslip.move_id = False
         return super().action_payslip_cancel()
+
+    def action_reopen_confirmed_payslip(self):
+        """Safely reopen a confirmed payslip before it is recomputed.
+
+        A new confirmation must never reuse the existing accounting entry:
+        it is deleted when the journal allows it, otherwise an auditable
+        reversal is posted.  The payslip is then detached from that entry
+        before the base module returns it to draft.
+        """
+        if not self.env.user.has_group("payroll.group_payroll_manager"):
+            raise AccessError(
+                _("Seul un gestionnaire de paie peut remettre un bulletin confirmé en brouillon.")
+            )
+
+        for payslip in self.filtered(lambda slip: slip.state == "done"):
+            move = payslip.move_id
+            if not move:
+                continue
+            if move.journal_id.restrict_mode_hash_table:
+                if move.state == "posted":
+                    reversal = move._reverse_moves([{
+                        "date": fields.Date.context_today(payslip),
+                        "ref": _("Annulation pour remise en brouillon du bulletin %s") % (
+                            payslip.number or payslip.name,
+                        ),
+                    }])
+                    reversal.action_post()
+            else:
+                if move.state == "posted":
+                    move.with_context(force_delete=True).button_cancel()
+                move.with_context(force_delete=True).unlink()
+            payslip.move_id = False
+        return super().action_reopen_confirmed_payslip()
 
     def action_payslip_done(self):
         res = super().action_payslip_done()
