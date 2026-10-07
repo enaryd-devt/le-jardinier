@@ -92,7 +92,7 @@ export class PrimetechPurchaseOverviewDashboard extends Component {
     }
 
     openProducts(ids = []) {
-        this.openView("Produits", "product.product", ids.length ? [["id", "in", ids]] : []);
+        this.openView("Produits achetés", "product.product", ids.length ? [["id", "in", ids]] : (this.domain.products || []));
     }
 
     openWizard(xmlId) {
@@ -101,8 +101,11 @@ export class PrimetechPurchaseOverviewDashboard extends Component {
 
     renderCharts() {
         const data = this.state.data || {};
+        const rows = data.evolution || [];
+        this.renderChart("pt_purchase_evolution_chart", "line", rows.map((row) => row.label), [{ label: "Achats", data: rows.map((row) => row.purchases), borderColor: "#2676ed", backgroundColor: "rgba(38,118,237,.12)", fill: true, tension: .35 }, { label: "Réceptions", data: rows.map((row) => row.receipts), borderColor: "#18b877", backgroundColor: "rgba(24,184,119,.08)", fill: true, tension: .35 }]);
         this.renderDoughnut("pt_purchase_category_chart", data.expense_by_category || [], "category", "amount", ["#2563eb", "#16a34a", "#f59e0b", "#ef4444", "#7c3aed"]);
-        this.renderDoughnut("pt_purchase_orders_chart", data.order_reception_split || [], "label", "value", ["#2563eb", "#16a34a", "#f59e0b", "#ef4444"]);
+        this.renderChart("pt_purchase_orders_chart", "bar", rows.map((row) => row.label), [{ label: "Commandes", data: rows.map((row) => row.orders), backgroundColor: "#2878ef", borderRadius: 4 }]);
+        this.renderChart("pt_purchase_average_chart", "line", rows.map((row) => row.label), [{ label: "Coût moyen", data: rows.map((row) => row.orders ? row.purchases / row.orders : 0), borderColor: "#8954e8", backgroundColor: "rgba(137,84,232,.12)", fill: true, tension: .35 }]);
     }
 
     renderDoughnut(canvasId, rows, labelKey, valueKey, colors) {
@@ -116,6 +119,15 @@ export class PrimetechPurchaseOverviewDashboard extends Component {
             data: { labels: rows.map((row) => row[labelKey]), datasets: [{ data: rows.map((row) => row[valueKey]), backgroundColor: colors, borderWidth: 0 }] },
             options: { responsive: true, maintainAspectRatio: false, cutout: "58%", plugins: { legend: { position: "right", labels: { boxWidth: 10, font: { size: 10 } } } } },
         });
+    }
+
+    renderChart(canvasId, type, labels, datasets) {
+        if (typeof Chart === "undefined") return;
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const existing = Chart.getChart(canvas);
+        if (existing) existing.destroy();
+        new Chart(canvas, { type, data: { labels, datasets }, options: { responsive: true, maintainAspectRatio: false, animation: { duration: 450 }, plugins: { legend: { position: "top", labels: { boxWidth: 9, font: { size: 10 } } } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 9 } } }, y: { beginAtZero: true, grid: { color: "rgba(148,163,184,.15)" }, ticks: { font: { size: 9 }, maxTicksLimit: 4 } } } } });
     }
 }
 

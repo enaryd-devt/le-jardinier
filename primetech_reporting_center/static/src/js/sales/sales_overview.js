@@ -84,29 +84,43 @@ export class SalesOverviewDashboard extends Component {
     }
 
     openProducts(ids = []) {
-        this.openView("Produits", "product.product", ids.length ? [["id", "in", ids]] : []);
+        this.openView("Produits vendus", "product.product", ids.length ? [["id", "in", ids]] : (this.domain.products || []));
     }
 
     openSalespersons(ids = []) {
-        this.openView("Commerciaux", "res.users", ids.length ? [["id", "in", ids]] : []);
+        this.openView("Commerciaux", "res.users", ids.length ? [["id", "in", ids]] : (this.domain.salespersons || []));
+    }
+
+    openReport(actionXmlId) {
+        this.action.doAction(`primetech_reporting_center.${actionXmlId}`);
     }
 
     renderChart() {
-        const canvas = document.getElementById("salesEvolutionChart");
-        if (!canvas || !this.state.data.monthly_sales) return;
-        if (this.chart) this.chart.destroy();
+        if (!this.state.data.monthly_sales || typeof Chart === "undefined") return;
         const labels = this.state.data.monthly_sales.map((item) => item.month);
-        this.chart = new Chart(canvas, {
-            type: "bar",
+        this.renderCanvasChart("salesEvolutionChart", "line", labels, [
+            { label: "Chiffre d'affaires", data: this.state.data.monthly_sales.map((item) => item.amount), borderColor: "#2676ed", backgroundColor: "rgba(38,118,237,.12)", fill: true, tension: .35 },
+            { label: "Marge brute", data: this.state.data.monthly_sales.map((item) => item.margin || 0), borderColor: "#18b877", backgroundColor: "rgba(24,184,119,.08)", fill: true, tension: .35 },
+        ]);
+        this.renderCanvasChart("salesOrderChart", "bar", labels, [{ label: "Commandes confirmées", data: this.state.data.monthly_sales.map((item) => item.orders || 0), backgroundColor: "#8b5cf6", borderRadius: 4 }]);
+        const categories = this.state.data.category_sales || [];
+        this.renderCanvasChart("salesCategoryChart", "doughnut", categories.map((item) => item.name), [{ data: categories.map((item) => item.amount), backgroundColor: ["#2878ef", "#ff5b6e", "#a077ed", "#f7bd27", "#16aea7", "#718096"], borderWidth: 0 }]);
+        const channels = this.state.data.sales_channels || [];
+        this.renderCanvasChart("salesChannelChart", "doughnut", channels.map((item) => item.name), [{ data: channels.map((item) => item.amount), backgroundColor: ["#2878ef", "#20b879", "#ff8a27", "#8954e8", "#ef6477", "#12aaa5"], borderWidth: 0 }]);
+    }
+
+    renderCanvasChart(id, type, labels, datasets) {
+        const canvas = document.getElementById(id);
+        if (!canvas) return;
+        const existing = Chart.getChart(canvas);
+        if (existing) existing.destroy();
+        new Chart(canvas, {
+            type,
             data: {
                 labels,
-                datasets: [
-                    { type: "bar", label: "Chiffre d'affaires (FCFA)", data: this.state.data.monthly_sales.map((item) => item.amount), backgroundColor: "#1d9bf0", borderRadius: 5 },
-                    { type: "line", label: "Marge (FCFA)", data: this.state.data.monthly_sales.map((item) => item.margin || 0), borderColor: "#21b573", backgroundColor: "#21b573", tension: 0.35, yAxisID: "y" },
-                    { type: "line", label: "Commandes", data: this.state.data.monthly_sales.map((item) => item.orders || 0), borderColor: "#ff9f1c", backgroundColor: "#ff9f1c", tension: 0.35, yAxisID: "y1" },
-                ],
+                datasets,
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "top", align: "start" } }, scales: { y: { beginAtZero: true }, y1: { beginAtZero: true, position: "right", grid: { drawOnChartArea: false } } } },
+            options: { responsive: true, maintainAspectRatio: false, animation: { duration: 450 }, plugins: { legend: { position: "top", labels: { boxWidth: 9, font: { size: 10 } } } }, scales: type === "doughnut" ? {} : { x: { grid: { display: false }, ticks: { font: { size: 9 } } }, y: { beginAtZero: true, grid: { color: "rgba(148,163,184,.15)" }, ticks: { font: { size: 9 }, maxTicksLimit: 4 } } } },
         });
     }
 }

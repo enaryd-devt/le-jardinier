@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <!-- Même barre de commande compacte que le tableau de bord Comptabilité. -->
+    <t t-inherit="primetech_reporting_center.ExecutiveBoard" t-inherit-mode="extension" owl="1">
+        <xpath expr="//header[contains(@class, 'pt-eb-header')]" position="replace">
+            <header class="pt-eb-header pt-a2-header" data-scroll-key="header">
+                <div class="pt-a2-title">
+                    <span class="pt-a2-title-icon"><i class="fa fa-line-chart"/></span>
+                    <div>
+                        <h1>Tableau de bord exécutif</h1>
+                        <p>Vue d’ensemble consolidée des indicateurs de l’entreprise</p>
+                    </div>
+                </div>
+                <div class="pt-a2-filters pt-eb-top-controls">
+                    <label class="pt-a2-filter-label pt-a2-period-control">Période
+                        <select class="pt-eb-filter-select" aria-label="Période d'analyse" t-att-value="state.period" t-on-change="onPeriodChange">
+                            <option value="today">Aujourd'hui</option>
+                            <option value="week">Cette semaine</option>
+                            <option value="month">Ce mois</option>
+                            <option value="year">Cette année</option>
+                            <option value="custom">Période</option>
+                        </select>
+                    </label>
+                    <t t-if="state.period === 'custom'">
+                        <label class="pt-a2-filter-label">Du
+                            <input type="date" aria-label="Date de début" t-att-value="state.dateFrom" t-att-max="state.dateTo || undefined" t-on-change="(ev) => this.onCustomDateChange('dateFrom', ev)"/>
+                        </label>
+                        <label class="pt-a2-filter-label">Au
+                            <input type="date" aria-label="Date de fin" t-att-value="state.dateTo" t-att-min="state.dateFrom || undefined" t-on-change="(ev) => this.onCustomDateChange('dateTo', ev)"/>
+                        </label>
+                    </t>
+                </div>
+            </header>
+        </xpath>
+    </t>
+</templates>

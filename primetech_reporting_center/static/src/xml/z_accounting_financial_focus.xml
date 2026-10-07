@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <!-- Les indicateurs de cette vue viennent des factures, paiements et écritures validés. -->
+    <t t-inherit="primetech_reporting_center.AccountingDashboard" t-inherit-mode="extension" owl="1">
+        <xpath expr="//section[contains(@class, 'pt-a2-kpis')]" position="replace">
+            <section class="pt-a2-kpis">
+                <button class="tone-green" t-on-click="() => this.openInvoices()"><i class="fa fa-file-text-o"/><span>Facturation clients</span><strong><t t-esc="money(state.data.customer_invoicing.value)"/></strong><em><t t-esc="pct(state.data.customer_invoicing.variation)"/></em></button>
+                <button class="tone-orange" t-on-click="() => this.openBills()"><i class="fa fa-files-o"/><span>Facturation fournisseurs</span><strong><t t-esc="money(state.data.supplier_invoicing.value)"/></strong><em><t t-esc="pct(state.data.supplier_invoicing.variation)"/></em></button>
+                <button class="tone-emerald" t-on-click="() => this.openJournalItems()"><i class="fa fa-line-chart"/><span>Résultat comptable</span><strong><t t-esc="money(state.data.net_result)"/></strong><em><t t-esc="pct(state.data.net_result_growth)"/></em></button>
+                <button class="tone-blue" t-on-click="() => this.openInvoices([['payment_state','!=','paid']])"><i class="fa fa-users"/><span>Créances clients</span><strong><t t-esc="money(state.data.receivables)"/></strong><em><t t-esc="pct(state.data.receivables_growth)"/></em></button>
+                <button class="tone-purple" t-on-click="() => this.openBills([['payment_state','!=','paid']])"><i class="fa fa-shopping-cart"/><span>Dettes fournisseurs</span><strong><t t-esc="money(state.data.payables)"/></strong><em><t t-esc="pct(state.data.payables_growth)"/></em></button>
+                <button class="tone-cyan" t-on-click="() => this.openCashMovements('in')"><i class="fa fa-download"/><span>Encaissements comptabilisés</span><strong><t t-esc="money(state.data.cashflow.incoming)"/></strong></button>
+                <button class="tone-red" t-on-click="() => this.openCashMovements('out')"><i class="fa fa-upload"/><span>Décaissements comptabilisés</span><strong><t t-esc="money(state.data.cashflow.outgoing)"/></strong></button>
+                <button class="tone-rose" t-on-click="() => this.openInvoices([['invoice_date_due','&lt;',state.data.today],['payment_state','!=','paid']])"><i class="fa fa-exclamation-circle"/><span>Factures clients échues</span><strong><t t-esc="money(state.data.overdue_amount)"/></strong><em class="danger"><t t-esc="state.data.overdue_count"/> factures</em></button>
+                <button class="tone-teal" t-on-click="() => this.openAccounts()"><i class="fa fa-bank"/><span>Trésorerie disponible</span><strong><t t-esc="money(state.data.cash)"/></strong><em><t t-esc="pct(state.data.cash_growth)"/></em></button>
+                <button class="tone-yellow" t-on-click="() => this.openJournalItems()"><i class="fa fa-percent"/><span>Impôts et taxes à payer</span><strong><t t-esc="money(state.data.tax_due)"/></strong></button>
+            </section>
+        </xpath>
+        <xpath expr="//section[contains(@class, 'pt-a2-charts')]" position="replace">
+            <section class="pt-a2-charts">
+                <article><h3><i class="fa fa-files-o"/> Facturation clients et fournisseurs</h3><canvas id="accountingRevenueChart"/></article>
+                <article><h3><i class="fa fa-exchange"/> Encaissements et décaissements</h3><canvas id="accountingFlowChart"/></article>
+                <article><h3><i class="fa fa-pie-chart"/> Répartition des charges comptables</h3><canvas id="accountingExpenseChart"/></article>
+                <article><h3><i class="fa fa-line-chart"/> Évolution de la trésorerie</h3><canvas id="accountingTreasuryChart"/></article>
+            </section>
+        </xpath>
+        <xpath expr="//section[contains(@class, 'pt-a2-bottom')]/article[3]" position="replace">
+            <article class="pt-a2-financial-reports">
+                <h3><i class="fa fa-print"/> États financiers et impressions</h3>
+                <div class="pt-a2-financial">
+                    <button t-on-click="() => this.openAccountingReport('action_trial_balance_wizard')"><i class="fa fa-balance-scale"/> Balance générale</button>
+                    <button t-on-click="() => this.openAccountingReport('action_general_ledger_wizard')"><i class="fa fa-book"/> Grand livre</button>
+                    <button t-on-click="() => this.openAccountingReport('action_accounting_journal_wizard')"><i class="fa fa-list-alt"/> Journaux comptables</button>
+                    <button t-on-click="() => this.openAccountingReport('action_partner_balance_wizard')"><i class="fa fa-users"/> Balance des tiers</button>
+                    <button t-on-click="() => this.openAccountingReport('action_balance_sheet_wizard')"><i class="fa fa-university"/> Bilan</button>
+                    <button t-on-click="() => this.openAccountingReport('action_income_statement_wizard')"><i class="fa fa-line-chart"/> Compte de résultat</button>
+                    <button t-on-click="() => this.openAccountingReport('action_cash_period_report')"><i class="fa fa-money"/> Rapport de trésorerie</button>
+                </div>
+            </article>
+        </xpath>
+    </t>
+</templates>

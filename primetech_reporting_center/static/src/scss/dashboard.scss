@@ -9,6 +9,69 @@
     box-sizing: border-box;
 }
 
+/* Barre exécutive alignée sur le format 100 % et la barre de la Comptabilité. */
+.pt-reporting-dashboard .pt-exec-board {
+    background: #f6f8fc;
+    font-family: inherit;
+    padding: 12px;
+    transform: none;
+    zoom: 1;
+}
+
+.pt-reporting-dashboard .pt-exec-board .pt-eb-header.pt-a2-header {
+    align-items: center;
+    background: #fff;
+    border: 0;
+    border-radius: 10px;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, .06);
+    gap: 18px;
+    margin-bottom: 10px;
+    padding: 10px 14px;
+}
+
+.pt-reporting-dashboard .pt-exec-board .pt-a2-title { align-items: center; display: flex; gap: 9px; }
+.pt-reporting-dashboard .pt-exec-board .pt-a2-title-icon { align-items: center; background: #f0edff; border-radius: 9px; color: #6844cf; display: grid; font-size: 23px; height: 42px; place-items: center; width: 42px; }
+.pt-reporting-dashboard .pt-exec-board .pt-a2-title h1 { color: #0f172a; font-size: 17px; font-weight: 800; letter-spacing: normal; line-height: 1.2; margin: 0; }
+.pt-reporting-dashboard .pt-exec-board .pt-a2-title p { color: #64748b; font-size: 11px; margin: 2px 0 0; }
+.pt-reporting-dashboard .pt-exec-board .pt-a2-filters { align-items: center; display: flex; gap: 9px; }
+.pt-reporting-dashboard .pt-exec-board .pt-a2-filter-label { align-items: center; color: #475569; display: flex; font-size: 10px; font-weight: 800; gap: 5px; margin: 0; white-space: nowrap; }
+.pt-reporting-dashboard .pt-exec-board .pt-a2-filters select,
+.pt-reporting-dashboard .pt-exec-board .pt-a2-filters input { background: #fff; border: 1px solid #dce4ef; border-radius: 5px; box-shadow: none; color: inherit; font: inherit; font-size: 11px; height: 30px; min-height: 30px; padding: 0 8px; }
+.pt-reporting-dashboard .pt-exec-board .pt-a2-period-control { position: relative; }
+.pt-reporting-dashboard .pt-exec-board .pt-a2-period-control select { appearance: none; cursor: pointer; min-width: 168px; padding-right: 29px; transition: border-color .22s ease, box-shadow .22s ease, transform .22s ease; }
+.pt-reporting-dashboard .pt-exec-board .pt-a2-period-control::after { border: solid currentColor; border-width: 0 2px 2px 0; content: ""; height: 6px; pointer-events: none; position: absolute; right: 10px; top: 12px; transform: rotate(45deg); transition: transform .24s cubic-bezier(.2,.8,.2,1), color .22s ease; width: 6px; }
+.pt-reporting-dashboard .pt-exec-board .pt-a2-period-control:hover select,
+.pt-reporting-dashboard .pt-exec-board .pt-a2-period-control:focus-within select { border-color: var(--o-brand-primary, #714b67); box-shadow: 0 4px 12px rgba(15,23,42,.11); transform: translateY(-1px); }
+.pt-reporting-dashboard .pt-exec-board .pt-a2-period-control:focus-within::after { color: var(--o-brand-primary, #714b67); transform: rotate(225deg) translate(-2px,-2px); }
+
+/* Chevron cohérent sur tous les filtres internes du tableau exécutif. */
+.pt-reporting-dashboard .pt-exec-board .pt-eb-filter-select {
+    appearance: none !important;
+    background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%) !important;
+    background-position: calc(100% - 14px) 12px, calc(100% - 9px) 12px !important;
+    background-repeat: no-repeat !important;
+    background-size: 6px 6px, 6px 6px !important;
+    cursor: pointer;
+    padding-right: 29px !important;
+    transition: border-color .22s ease, box-shadow .22s ease, background-position .22s ease, transform .22s ease;
+}
+
+.pt-reporting-dashboard .pt-exec-board .pt-eb-filter-select:hover,
+.pt-reporting-dashboard .pt-exec-board .pt-eb-filter-select:focus {
+    border-color: var(--o-brand-primary, #714b67) !important;
+    box-shadow: 0 4px 12px rgba(15,23,42,.11) !important;
+    background-position: calc(100% - 14px) 14px, calc(100% - 9px) 14px !important;
+    outline: 0;
+    transform: translateY(-1px);
+}
+
+.pt-reporting-dashboard .pt-exec-board .pt-a2-period-control .pt-eb-filter-select { background-image: none !important; }
+
+@media (max-width: 850px) {
+    .pt-reporting-dashboard .pt-exec-board .pt-eb-header.pt-a2-header { align-items: flex-start; flex-direction: column; }
+    .pt-reporting-dashboard .pt-exec-board .pt-a2-filters { flex-wrap: wrap; width: 100%; }
+}
+
 .o_action_manager {
 
     overflow: auto !important;

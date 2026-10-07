@@ -1,5 +1,6 @@
 from odoo import api, fields, models
 from dateutil.relativedelta import relativedelta
+from collections import defaultdict
 
 from ..date_range import DashboardDateRange
 
@@ -165,6 +166,12 @@ class PrimetechAccountingDashboard(models.AbstractModel):
         def growth(current, previous):
             return round((current - previous) / previous * 100, 1) if previous else 0.0
 
+        # Les indicateurs de facturation sont issus des pièces comptables validées,
+        # et non des commandes commerciales.
+        customer_invoicing = sum(invoices.mapped('amount_total'))
+        previous_customer_invoicing = sum(previous_invoices.mapped('amount_total'))
+        supplier_invoicing = sum(bills.mapped('amount_total'))
+        previous_supplier_invoicing = sum(previous_bills.mapped('amount_total'))
         revenue = sum(invoices.mapped('amount_untaxed'))
         previous_revenue = sum(previous_invoices.mapped('amount_untaxed'))
         receivables = sum(invoices.filtered(lambda invoice: invoice.payment_state != 'paid').mapped('amount_residual'))
@@ -185,8 +192,18 @@ class PrimetechAccountingDashboard(models.AbstractModel):
         previous_net_result = previous_revenue - sum(previous_bills.mapped('amount_untaxed'))
         net_margin = round(net_result * 100 / revenue, 1) if revenue else 0.0
         previous_net_margin = round(previous_net_result * 100 / previous_revenue, 1) if previous_revenue else 0.0
-        incoming = sum(invoices.filtered(lambda invoice: invoice.payment_state in ['paid', 'in_payment']).mapped('amount_total'))
-        outgoing = sum(bills.filtered(lambda bill: bill.payment_state in ['paid', 'in_payment']).mapped('amount_total'))
+        # Les flux de trésorerie proviennent des comptes Caisse / Banque du plan
+        # comptable. Un débit de compte de trésorerie est un encaissement ; un
+        # crédit est un décaissement.
+        cash_line_domain = [
+            ('move_id.state', '=', 'posted'),
+            ('date', '>=', start_value),
+            ('date', '<=', end_value),
+            ('account_id', 'in', cash_accounts.ids),
+        ] + company_domain
+        cash_move_lines = self.env['account.move.line'].search(cash_line_domain)
+        incoming = sum(cash_move_lines.mapped('debit'))
+        outgoing = sum(cash_move_lines.mapped('credit'))
         theoretical_cash = total_cash + incoming - outgoing
         cash_position = {'opening': previous_cash, 'theoretical': theoretical_cash, 'real': total_cash, 'cashier': self.env.user.name, 'status': 'Ouverte'}
 
@@ -204,10 +221,13 @@ class PrimetechAccountingDashboard(models.AbstractModel):
         for index in range(8):
             day = min(start + relativedelta(days=index * step), end)
             next_day = min(day + relativedelta(days=step), end + relativedelta(days=1))
-            day_in = sum(invoices.filtered(lambda invoice: invoice.invoice_date and day <= invoice.invoice_date < next_day and invoice.payment_state in ['paid', 'in_payment']).mapped('amount_total'))
-            day_out = sum(bills.filtered(lambda bill: bill.invoice_date and day <= bill.invoice_date < next_day and bill.payment_state in ['paid', 'in_payment']).mapped('amount_total'))
+            day_cash_lines = cash_move_lines.filtered(lambda line: line.date and day <= line.date < next_day)
+            day_in = sum(day_cash_lines.mapped('debit'))
+            day_out = sum(day_cash_lines.mapped('credit'))
+            day_customer_invoicing = sum(invoices.filtered(lambda invoice: invoice.invoice_date and day <= invoice.invoice_date < next_day).mapped('amount_total'))
+            day_supplier_invoicing = sum(bills.filtered(lambda bill: bill.invoice_date and day <= bill.invoice_date < next_day).mapped('amount_total'))
             balance += day_in - day_out
-            treasury_evolution.append({'label': day.strftime('%d/%m'), 'incoming': day_in, 'outgoing': day_out, 'balance': balance})
+            treasury_evolution.append({'label': day.strftime('%d/%m'), 'incoming': day_in, 'outgoing': day_out, 'customer_invoicing': day_customer_invoicing, 'supplier_invoicing': day_supplier_invoicing, 'balance': balance})
 
         def age_row(label, min_days, max_days=None):
             aged = open_invoices.filtered(lambda invoice: invoice.invoice_date_due and (today - invoice.invoice_date_due).days >= min_days and (max_days is None or (today - invoice.invoice_date_due).days <= max_days))
@@ -222,6 +242,36 @@ class PrimetechAccountingDashboard(models.AbstractModel):
         receivable_aging = [age_row('Non échues', -9999, -1), age_row('1 à 30 jours', 1, 30), age_row('31 à 60 jours', 31, 60), age_row('+ de 60 jours', 61, None)]
         overdue_invoices = open_invoices.filtered(lambda invoice: invoice.invoice_date_due and invoice.invoice_date_due < today)
         overdue_bills = bills.filtered(lambda bill: bill.payment_state != 'paid' and bill.invoice_date_due and bill.invoice_date_due < today)
+
+        def payable_age_row(label, min_days, max_days=None):
+            aged = bills.filtered(lambda bill: bill.payment_state != 'paid' and bill.invoice_date_due and (today - bill.invoice_date_due).days >= min_days and (max_days is None or (today - bill.invoice_date_due).days <= max_days))
+            amount = sum(aged.mapped('amount_residual'))
+            total = max(payables, 1)
+            domain = list(bill_domain) + [('payment_state', '!=', 'paid')]
+            if max_days is None:
+                domain.append(('invoice_date_due', '<=', fields.Date.to_string(today - relativedelta(days=min_days))))
+            else:
+                domain += [('invoice_date_due', '>=', fields.Date.to_string(today - relativedelta(days=max_days))), ('invoice_date_due', '<=', fields.Date.to_string(today - relativedelta(days=min_days)))]
+            return {'label': label, 'amount': amount, 'percent': round(amount / total * 100, 1), 'domain': domain}
+
+        payable_aging = [payable_age_row('Non échues', -9999, -1), payable_age_row('1 – 30 jours', 1, 30), payable_age_row('31 – 60 jours', 31, 60), payable_age_row('Plus de 60 jours', 61, None)]
+        tax_due = max(sum(invoices.mapped('amount_tax')) - sum(bills.mapped('amount_tax')), 0.0)
+        expense_lines = self.env['account.move.line'].search([
+            ('move_id.state', '=', 'posted'), ('date', '>=', start_value), ('date', '<=', end_value),
+            ('account_id.account_type', '=', 'expense'),
+        ] + company_domain)
+        expense_by_account = defaultdict(float)
+        for line in expense_lines:
+            expense_by_account[line.account_id.name or line.account_id.code] += (line.debit or 0.0) - (line.credit or 0.0)
+        total_expenses = sum(max(value, 0.0) for value in expense_by_account.values())
+        expense_categories = [
+            {'name': name, 'amount': amount, 'percent': round(amount * 100 / total_expenses, 1) if total_expenses else 0.0}
+            for name, amount in sorted(expense_by_account.items(), key=lambda item: item[1], reverse=True)[:6]
+            if amount
+        ]
+        activity_evolution = []
+        for row in treasury_evolution:
+            activity_evolution.append({'label': row['label'], 'customer_invoicing': row['customer_invoicing'], 'supplier_invoicing': row['supplier_invoicing'], 'incoming': row['incoming'], 'outgoing': row['outgoing'], 'cash': row['balance']})
 
         debtor_data = {}
         for invoice in open_invoices:
@@ -240,21 +290,23 @@ class PrimetechAccountingDashboard(models.AbstractModel):
         unposted_journals = Move.search_count([('state', '=', 'draft'), ('date', '>=', start_value), ('date', '<=', end_value)] + company_domain)
         period_options = [{'value': value, 'label': label} for value, label in [('today', "Aujourd'hui"), ('week', 'Cette semaine'), ('month', 'Ce mois'), ('quarter', 'Ce trimestre'), ('year', 'Cette année')]]
         comparison_options = [{'value': value, 'label': label} for value, label in [('previous_period', 'Période précédente'), ('previous_year', 'Même période N-1'), ('none', 'Sans comparaison')]]
-        period_options = [option for option in period_options if option['value'] != 'quarter']
         period_options.append({'value': 'custom', 'label': 'Période'})
         return {
             'today': fields.Date.to_string(today), 'updated_at': fields.Datetime.now().strftime('%d/%m/%Y %H:%M'),
             'filters': {'company_id': company_id or '', 'period': period, 'comparison': comparison, 'date_from': start_value, 'date_to': end_value, 'period_label': dict((option['value'], option['label']) for option in period_options).get(period, 'Ce mois'), 'comparison_label': dict((option['value'], option['label']) for option in comparison_options).get(comparison, 'Période précédente'), 'companies': [{'id': company.id, 'name': company.display_name} for company in allowed_companies], 'periods': period_options, 'comparisons': comparison_options},
+            'customer_invoicing': {'value': round(customer_invoicing, 2), 'variation': growth(customer_invoicing, previous_customer_invoicing)},
+            'supplier_invoicing': {'value': round(supplier_invoicing, 2), 'variation': growth(supplier_invoicing, previous_supplier_invoicing)},
             'revenue': {'value': round(revenue, 2), 'variation': growth(revenue, previous_revenue)}, 'previous_revenue': previous_revenue,
             'cash': total_cash, 'previous_cash': previous_cash, 'cash_growth': growth(total_cash, previous_cash),
             'receivables': receivables, 'previous_receivables': previous_receivables, 'receivables_growth': growth(receivables, previous_receivables),
             'payables': payables, 'previous_payables': previous_payables, 'payables_growth': growth(payables, previous_payables),
+            'tax_due': tax_due, 'expenses': total_expenses,
             'net_result': net_result, 'previous_net_result': previous_net_result, 'net_result_growth': growth(net_result, previous_net_result), 'net_margin': net_margin, 'previous_net_margin': previous_net_margin, 'net_margin_growth': growth(net_margin, previous_net_margin),
             'cashflow': {'incoming': incoming, 'outgoing': outgoing, 'projected': incoming - outgoing}, 'cash_position': cash_position,
             'invoice_counts': {'total': len(invoices), 'paid': len(paid_invoices), 'partial': len(partially_paid), 'open': len(open_invoices)},
             'average_payment_delay': average_payment_delay, 'collection_rate': collection_rate,
-            'cash_accounts': cash_by_account, 'treasury_evolution': treasury_evolution, 'receivable_aging': receivable_aging,
+            'cash_accounts': cash_by_account, 'treasury_evolution': treasury_evolution, 'activity_evolution': activity_evolution, 'expense_categories': expense_categories, 'receivable_aging': receivable_aging, 'payable_aging': payable_aging,
             'debtors': debtors, 'overdue_count': len(overdue_invoices), 'overdue_amount': sum(overdue_invoices.mapped('amount_residual')),
             'alerts': {'overdue_customer_invoices': len(overdue_invoices), 'overdue_vendor_bills': len(overdue_bills), 'unbalanced_entries': unbalanced_entries, 'unposted_journals': unposted_journals, 'cash_not_closed': 1},
-            'domains': {'customer_invoices': invoice_domain, 'vendor_bills': bill_domain, 'cash_accounts': [('id', 'in', cash_accounts.ids)], 'move_lines': [('date', '>=', start_value), ('date', '<=', end_value)] + company_domain},
+            'domains': {'customer_invoices': invoice_domain, 'vendor_bills': bill_domain, 'cash_movement_lines': cash_line_domain, 'cash_accounts': [('id', 'in', cash_accounts.ids)], 'move_lines': [('date', '>=', start_value), ('date', '<=', end_value)] + company_domain},
         }

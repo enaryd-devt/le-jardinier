@@ -103,6 +103,10 @@ export class HROverviewDashboard extends Component {
         this.openView("Paie", "hr.payslip", [...(this.domain.payslips || []), ...extraDomain]);
     }
 
+    openReport(xmlid) {
+        this.action.doAction(xmlid);
+    }
+
     renderCharts() {
         if (typeof Chart === "undefined") return;
         this.renderDepartmentChart();

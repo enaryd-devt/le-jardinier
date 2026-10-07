@@ -2,7 +2,7 @@
 
 export const GLOBAL_DATE_FILTER_EVENT = "primetech-global-date-filter-changed";
 const GLOBAL_DATE_FILTER_KEY = "primetech_reporting_center.global_date_filter";
-const ALLOWED_PERIODS = new Set(["today", "week", "month", "year", "custom"]);
+const ALLOWED_PERIODS = new Set(["today", "week", "month", "quarter", "year", "custom"]);
 const DEFAULT_GLOBAL_DATE_FILTER = Object.freeze({ period: "month", dateFrom: "", dateTo: "" });
 
 function dateInputValue(date) {

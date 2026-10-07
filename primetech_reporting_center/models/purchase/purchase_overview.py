@@ -121,6 +121,26 @@ class PrimetechPurchaseOverview(models.AbstractModel):
                 item['qty'] += line.product_qty
                 item['amount'] += line.price_subtotal
 
+        quantity_purchased = sum(purchase_orders.mapped('order_line').mapped('product_qty'))
+        pending_orders = all_period_orders.filtered(lambda order: order.state in ['draft', 'sent'])
+        refund_bills = AccountMove.search([('move_type', '=', 'in_refund'), ('state', '=', 'posted'), ('invoice_date', '>=', start_value), ('invoice_date', '<=', end_value)])
+        # stock.move ne porte pas de champ monétaire « value » dans cette version
+        # d'Odoo. La valorisation affichée dans le tableau provient donc de la
+        # commande fournisseur liée à chaque réception.
+        receipt_amount = sum(receipts.filtered(lambda picking: picking.state == 'done').mapped('purchase_id').mapped('amount_total'))
+        daily = defaultdict(lambda: {'purchases': 0.0, 'receipts': 0.0, 'orders': 0})
+        for order in purchase_orders:
+            if order.date_order:
+                row = daily[order.date_order.strftime('%d/%m')]
+                row['purchases'] += order.amount_untaxed
+                row['orders'] += 1
+        for picking in receipts.filtered(lambda picking: picking.scheduled_date):
+            daily[picking.scheduled_date.strftime('%d/%m')]['receipts'] += picking.purchase_id.amount_total if picking.purchase_id else 0.0
+        last_receipts = [
+            {'id': picking.id, 'supplier': picking.partner_id.display_name, 'name': picking.name, 'date': picking.scheduled_date.strftime('%d/%m/%Y') if picking.scheduled_date else '', 'amount': picking.purchase_id.amount_total if picking.purchase_id else 0.0, 'state': dict(picking._fields['state'].selection).get(picking.state, picking.state)}
+            for picking in receipts.sorted(lambda picking: picking.scheduled_date or datetime.min, reverse=True)[:7]
+        ]
+
         alerts = {
             'to_approve': cycle['to_approve'],
             'late_receipts': len(late_receipts),
@@ -132,6 +152,10 @@ class PrimetechPurchaseOverview(models.AbstractModel):
         return {
             'today': today.isoformat(), 'date_from': start_value, 'date_to': end_value, 'period': period, 'updated_at': datetime.now().strftime('%d/%m/%Y %H:%M'),
             'purchase_count': purchase_count, 'previous_purchase_count': previous_purchase_count, 'supplier_count': supplier_count,
+            'quantity_purchased': quantity_purchased, 'quantity_purchased_growth': 0.0,
+            'pending_order_count': len(pending_orders), 'pending_order_growth': 0.0,
+            'refund_amount': sum(refund_bills.mapped('amount_total')), 'refund_count': len(refund_bills), 'refund_growth': 0.0,
+            'receipt_amount': receipt_amount,
             'total_ht': round(total_ht, 2), 'previous_total_ht': round(previous_total_ht, 2), 'total_ttc': round(total_ttc, 2),
             'billed_amount': round(billed_amount, 2), 'previous_billed_amount': round(previous_billed_amount, 2), 'billed_growth': growth(billed_amount, previous_billed_amount),
             'paid_amount': round(paid_amount, 2), 'previous_paid_amount': round(previous_paid_amount, 2), 'paid_growth': growth(paid_amount, previous_paid_amount),
@@ -140,6 +164,6 @@ class PrimetechPurchaseOverview(models.AbstractModel):
             'savings_amount': round(savings_amount, 2), 'previous_savings_amount': round(previous_savings_amount, 2), 'savings_growth': growth(savings_amount, previous_savings_amount),
             'average_supplier_delay': average_supplier_delay, 'previous_average_supplier_delay': 0, 'delay_growth': 0,
             'cycle': cycle, 'top_suppliers': top_suppliers, 'expense_by_category': expense_by_category, 'order_reception_split': order_reception_split,
-            'top_products': sorted(top_products.values(), key=lambda item: item['amount'], reverse=True)[:5], 'alerts': alerts,
-            'domains': {'orders': order_domain, 'bills': bill_domain, 'receipts': receipt_domain, 'suppliers': [('id', 'in', purchase_orders.mapped('partner_id').ids)]},
+            'top_products': sorted(top_products.values(), key=lambda item: item['amount'], reverse=True)[:7], 'alerts': alerts, 'evolution': [{'label': key, **value} for key, value in sorted(daily.items())], 'last_receipts': last_receipts,
+            'domains': {'orders': order_domain, 'bills': bill_domain, 'receipts': receipt_domain, 'suppliers': [('id', 'in', purchase_orders.mapped('partner_id').ids)], 'products': [('id', 'in', purchase_orders.mapped('order_line').mapped('product_id').ids)]},
         }

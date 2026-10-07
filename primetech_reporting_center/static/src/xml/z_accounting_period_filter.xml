@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <!-- Un sélecteur de période unique ; les dates libres ne sont utiles qu'en mode Période. -->
+    <t t-inherit="primetech_reporting_center.AccountingDashboard" t-inherit-mode="extension" owl="1">
+        <xpath expr="//div[contains(@class, 'pt-a2-filters')]" position="replace">
+            <div class="pt-a2-filters">
+                <select t-model="state.filters.company_id" t-on-change="onCompanyChange" aria-label="Société">
+                    <option value="">Toutes les sociétés</option>
+                    <t t-foreach="state.data.filters.companies || []" t-as="company" t-key="company.id">
+                        <option t-att-value="company.id"><t t-esc="company.name"/></option>
+                    </t>
+                </select>
+                <label class="pt-a2-filter-label pt-a2-period-control">Période
+                    <select t-model="state.dateFilter.period" t-on-change="onGlobalPeriodChange">
+                        <t t-foreach="state.data.filters.periods || []" t-as="period" t-key="period.value">
+                            <option t-att-value="period.value"><t t-esc="period.label"/></option>
+                        </t>
+                    </select>
+                </label>
+                <t t-if="state.dateFilter.period === 'custom'">
+                    <label class="pt-a2-filter-label">Du
+                        <input type="date" t-model="state.dateFilter.dateFrom" t-on-change="(ev) => this.onGlobalDateChange('dateFrom', ev)"/>
+                    </label>
+                    <label class="pt-a2-filter-label">Au
+                        <input type="date" t-model="state.dateFilter.dateTo" t-on-change="(ev) => this.onGlobalDateChange('dateTo', ev)"/>
+                    </label>
+                </t>
+            </div>
+        </xpath>
+    </t>
+</templates>

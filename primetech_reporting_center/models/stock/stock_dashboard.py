@@ -68,7 +68,9 @@ class StockDashboard(models.AbstractModel):
         overstock_items = [item for item in product_stock.values() if item['qty'] > max_qty]
 
         outgoing_moves = moves.filtered(lambda move: move.picking_type_id.code == 'outgoing')
+        incoming_moves = moves.filtered(lambda move: move.picking_type_id.code == 'incoming')
         outgoing_qty = sum(outgoing_moves.mapped('product_uom_qty'))
+        incoming_qty = sum(incoming_moves.mapped('product_uom_qty'))
         period_days = max((end - start).days + 1, 1)
         average_daily_outgoing = outgoing_qty / period_days if period_days else 0.0
         coverage_days = round(available_qty / average_daily_outgoing, 1) if average_daily_outgoing else 0.0
@@ -132,6 +134,20 @@ class StockDashboard(models.AbstractModel):
             'soon_expiring_lots': 0,
         }
 
+        category_stock = {}
+        for item in product_stock.values():
+            category = item['product'].categ_id.display_name or 'Sans catégorie'
+            category_stock[category] = category_stock.get(category, 0.0) + item['value']
+        category_stock = [{'name': name, 'value': value} for name, value in sorted(category_stock.items(), key=lambda row: row[1], reverse=True)[:7]]
+        top_stock_products = [
+            {'id': item['product'].id, 'name': item['product'].display_name, 'qty': item['qty'], 'value': item['value']}
+            for item in sorted(product_stock.values(), key=lambda row: row['value'], reverse=True)[:7]
+        ]
+        recent_moves = [
+            {'id': move.id, 'date': fields.Date.to_string(move.date.date()) if move.date else '', 'product': move.product_id.display_name, 'type': dict(move.picking_type_id._fields['code'].selection).get(move.picking_type_id.code, move.picking_type_id.code), 'qty': move.product_uom_qty, 'location': move.location_dest_id.display_name, 'reference': move.reference or move.picking_id.name or ''}
+            for move in moves.sorted(lambda row: row.date or fields.Datetime.now(), reverse=True)[:7]
+        ]
+
         return {
             'today': fields.Date.to_string(today), 'date_from': start_value, 'date_to': end_value, 'period': period, 'updated_at': fields.Datetime.now().strftime('%d/%m/%Y %H:%M'),
             'stock_value': stock_value, 'previous_stock_value': previous_stock_value, 'stock_value_growth': growth(stock_value, previous_stock_value),
@@ -142,6 +158,7 @@ class StockDashboard(models.AbstractModel):
             'coverage_days': coverage_days, 'previous_coverage_days': previous_coverage, 'coverage_growth': growth(coverage_days, previous_coverage),
             'rotation': rotation, 'previous_rotation': previous_rotation, 'rotation_growth': growth(rotation, previous_rotation),
             'warehouses': warehouses, 'period_moves': period_moves, 'shortage_products': shortage_products, 'replenishments': replenishments, 'alerts': alerts,
+            'incoming_qty': incoming_qty, 'outgoing_qty': outgoing_qty, 'moves_count': len(moves), 'category_stock': category_stock, 'top_stock_products': top_stock_products, 'recent_moves': recent_moves,
             'products_count': len(products), 'stock_qty': stock_qty, 'locations_count': len(internal_locations), 'pending_pickings': len(pickings),
             'below_min_product_ids': below_min_product_ids, 'overstock_product_ids': overstock_product_ids,
             'settings': settings,

@@ -24,6 +24,10 @@ class SalesOverview(models.AbstractModel):
         invoice_domain = [('move_type', '=', 'out_invoice'), ('state', '=', 'posted'), ('invoice_date', '>=', start_value), ('invoice_date', '<=', end_value)]
         order_domain = [('date_order', '>=', start_value), ('date_order', '<', end_exclusive_value)]
         invoices = self.env['account.move'].search(invoice_domain)
+        refunds = self.env['account.move'].search([
+            ('move_type', '=', 'out_refund'), ('state', '=', 'posted'),
+            ('invoice_date', '>=', start_value), ('invoice_date', '<=', end_value),
+        ])
         def line_margin(line):
             return line.margin if 'margin' in line._fields else 0.0
 
@@ -41,18 +45,25 @@ class SalesOverview(models.AbstractModel):
         customer_ids = invoices.mapped('partner_id')
         customer_count = len(customer_ids)
         average_ticket = turnover_ht / invoice_count if invoice_count else 0.0
+        quantity_sold = sum(invoices.mapped('invoice_line_ids').filtered(lambda line: line.product_id).mapped('quantity'))
         quotation_count = len(orders.filtered(lambda order: order.state in ['draft', 'sent']))
         conversion_rate = len(confirmed_orders) / (quotation_count + len(confirmed_orders)) * 100 if quotation_count or confirmed_orders else 0.0
 
         prev_start, prev_end = DashboardDateRange.previous_bounds(start, end)
         prev_invoice_domain = [('move_type', '=', 'out_invoice'), ('state', '=', 'posted'), ('invoice_date', '>=', prev_start.isoformat()), ('invoice_date', '<=', prev_end.isoformat())]
         prev_invoices = self.env['account.move'].search(prev_invoice_domain)
+        previous_refunds = self.env['account.move'].search([
+            ('move_type', '=', 'out_refund'), ('state', '=', 'posted'),
+            ('invoice_date', '>=', prev_start.isoformat()), ('invoice_date', '<=', prev_end.isoformat()),
+        ])
         previous_turnover = sum(prev_invoices.mapped('amount_untaxed'))
         previous_invoiced = sum(prev_invoices.mapped('amount_total'))
         previous_paid = sum(prev_invoices.filtered(lambda move: move.payment_state in ['paid', 'in_payment']).mapped('amount_total'))
         previous_margin = sum(line_margin(line) for line in prev_invoices.mapped('invoice_line_ids'))
         previous_average_ticket = previous_turnover / len(prev_invoices) if prev_invoices else 0.0
         previous_customer_count = len(prev_invoices.mapped('partner_id'))
+        previous_customer_ids = prev_invoices.mapped('partner_id').ids
+        new_customer_ids = [partner.id for partner in customer_ids if partner.id not in previous_customer_ids]
         previous_order_count = self.env['sale.order'].search_count([('date_order', '>=', prev_start.isoformat()), ('date_order', '<', start_value)])
         previous_conversion_rate = 0.0
 
@@ -116,6 +127,27 @@ class SalesOverview(models.AbstractModel):
             monthly_sales[key]['orders'] += 1
         evolution = [{'month': key, **vals} for key, vals in sorted(monthly_sales.items())]
 
+        category_totals = defaultdict(float)
+        channel_totals = defaultdict(float)
+        for invoice in invoices:
+            origin = (invoice.invoice_origin or '').upper()
+            channel = 'Point de vente' if origin.startswith('POS') else 'Vente directe'
+            channel_totals[channel] += invoice.amount_untaxed
+            for line in invoice.invoice_line_ids.filtered(lambda item: item.product_id):
+                category_totals[line.product_id.categ_id.display_name or 'Sans catégorie'] += line.price_subtotal
+        category_sales = [
+            {'name': name, 'amount': amount}
+            for name, amount in sorted(category_totals.items(), key=lambda item: item[1], reverse=True)[:6]
+        ]
+        sales_channels = [
+            {'name': name, 'amount': amount}
+            for name, amount in sorted(channel_totals.items(), key=lambda item: item[1], reverse=True)[:6]
+        ]
+        last_orders = [
+            {'id': order.id, 'name': order.name, 'date': order.date_order.strftime('%d/%m/%Y') if order.date_order else '', 'customer': order.partner_id.display_name, 'state': dict(order._fields['state'].selection).get(order.state, order.state), 'amount': order.amount_total}
+            for order in orders.sorted(lambda order: order.date_order or datetime.min, reverse=True)[:7]
+        ]
+
         return {
             'today': today.isoformat(), 'date_from': start_value, 'date_to': end_value, 'period': period, 'alert_date': alert_date.isoformat(), 'updated_at': datetime.now().strftime('%d/%m/%Y %H:%M'),
             'turnover_ht': turnover_ht, 'turnover_ttc': turnover_ttc, 'paid_amount': paid_amount, 'margin_amount': margin_amount,
@@ -124,9 +156,22 @@ class SalesOverview(models.AbstractModel):
             'margin_rate': round(margin_amount / turnover_ht * 100, 1) if turnover_ht else 0.0,
             'average_ticket': average_ticket, 'previous_average_ticket': previous_average_ticket, 'average_ticket_growth': growth(average_ticket, previous_average_ticket),
             'order_count': len(orders), 'confirmed_order_count': len(confirmed_orders), 'previous_order_count': previous_order_count,
+            'quantity_sold': quantity_sold, 'quantity_sold_growth': 0.0,
+            'new_customer_count': len(new_customer_ids), 'new_customer_growth': growth(len(new_customer_ids), 0),
+            'refund_count': len(refunds), 'refund_amount': sum(refunds.mapped('amount_total')), 'refund_growth': growth(sum(refunds.mapped('amount_total')), sum(previous_refunds.mapped('amount_total'))),
             'conversion_rate': conversion_rate, 'previous_conversion_rate': previous_conversion_rate, 'conversion_growth': growth(conversion_rate, previous_conversion_rate),
             'customer_count': customer_count, 'previous_customer_count': previous_customer_count, 'customer_growth': growth(customer_count, previous_customer_count),
             'pipeline': pipeline, 'billing': billing, 'alerts': {'expiring_quotes': pipeline['expired'], 'late_orders': pipeline['to_deliver'], 'unpaid_invoices': billing['unpaid'], 'blocked_orders': pipeline['blocked']},
             'top_customers': top_customers, 'top_products': top_products, 'top_salespersons': top_salespersons, 'monthly_sales': evolution,
-            'domains': {'invoices': invoice_domain, 'orders': order_domain, 'customers': [('id', 'in', customer_ids.ids)]},
+            'category_sales': category_sales, 'sales_channels': sales_channels, 'last_orders': last_orders,
+            # Ces domaines sont exhaustifs : les boutons « Voir tout » ne doivent
+            # jamais se limiter aux lignes affichées dans les tableaux du tableau
+            # de bord.
+            'domains': {
+                'invoices': invoice_domain,
+                'orders': order_domain,
+                'customers': [('id', 'in', customer_ids.ids)],
+                'products': [('id', 'in', invoices.mapped('invoice_line_ids').mapped('product_id').ids)],
+                'salespersons': [('id', 'in', invoices.mapped('invoice_user_id').ids)],
+            },
         }
