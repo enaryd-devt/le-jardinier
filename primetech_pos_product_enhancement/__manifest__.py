@@ -18,6 +18,7 @@
 
             "primetech_pos_product_enhancement/static/src/xml/product_card_templates.xml",
             "primetech_pos_product_enhancement/static/src/xml/pos_interface_templates.xml",
+            "primetech_pos_product_enhancement/static/src/xml/product_info_popup_templates.xml",
 
             "primetech_pos_product_enhancement/static/src/css/product_card_styles.css",
             "primetech_pos_product_enhancement/static/src/css/pos_interface.css",

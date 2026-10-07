@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+  <t t-inherit="point_of_sale.ProductInfoPopup" t-inherit-mode="extension" owl="1">
+    <xpath expr="//div[contains(@class, 'section-inventory')]" position="replace">
+      <div class="pt-company-stock mt-3 mb-4 pb-4 border-bottom text-start"
+           t-if="!isVariant and props.info.productInfo.primetech_company_stock.length &gt; 0">
+        <div class="pt-company-stock-title">
+          <i class="fa fa-building-o"/>
+          <span>Disponibilité par société et entrepôt</span>
+        </div>
+        <div class="pt-company-stock-list">
+          <t t-foreach="props.info.productInfo.primetech_company_stock" t-as="company" t-key="company.id">
+            <section class="pt-company-stock-card">
+              <header class="pt-company-stock-company" t-att-class="{'pt-company-stock-company-summary': !company.show_warehouses}">
+                <i class="fa fa-building"/>
+                <span t-esc="company.name"/>
+                <small t-if="company.show_warehouses">PDV actif</small>
+                <span t-if="!company.show_warehouses" class="pt-company-stock-inline-qty">
+                  <strong t-esc="company.available_quantity"/>
+                  <small t-esc="company.uom"/>
+                </span>
+              </header>
+              <details t-if="company.show_warehouses" class="pt-company-stock-details">
+                <summary>
+                  <span><i class="fa fa-cubes"/> Entrepôts du PDV</span>
+                  <i class="fa fa-chevron-down pt-company-stock-chevron"/>
+                </summary>
+                <div class="pt-company-stock-warehouses">
+                  <t t-foreach="company.warehouses" t-as="warehouse" t-key="warehouse.id">
+                    <div class="pt-company-stock-warehouse">
+                      <strong class="pt-company-stock-qty"><t t-esc="warehouse.available_quantity"/> <small t-esc="warehouse.uom"/></strong>
+                      <div class="pt-company-stock-warehouse-name">
+                        <span t-esc="warehouse.name"/>
+                        <small t-if="warehouse.code" t-esc="warehouse.code"/>
+                      </div>
+                      <span class="pt-company-stock-forecast">Prévu : <b t-esc="warehouse.forecasted_quantity"/></span>
+                    </div>
+                  </t>
+                  <div t-if="!company.warehouses.length" class="pt-company-stock-empty">
+                    Aucun entrepôt accessible.
+                  </div>
+                </div>
+              </details>
+            </section>
+          </t>
+        </div>
+      </div>
+    </xpath>
+  </t>
+</templates>

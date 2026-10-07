@@ -743,6 +743,36 @@
     transform: scale(.94);
 }
 
+/* Product information popup: stock grouped by company then warehouse. */
+.pt-company-stock-title { align-items: center; color: #334155; display: flex; font-size: 1rem; font-weight: 750; gap: 8px; margin-bottom: 12px; }
+.pt-company-stock-title > i { color: var(--o-brand-primary, #714b67); }
+.pt-company-stock-list { display: grid; gap: 10px; }
+.pt-company-stock-card { background: linear-gradient(135deg, color-mix(in srgb, var(--o-brand-primary, #714b67) 7%, #fff), #fff); border: 1px solid color-mix(in srgb, var(--o-brand-primary, #714b67) 18%, #fff); border-radius: 12px; overflow: hidden; }
+.pt-company-stock-company { align-items: center; background: color-mix(in srgb, var(--o-brand-primary, #714b67) 12%, #fff); color: var(--o-brand-primary, #714b67); display: flex; font-size: .9rem; font-weight: 750; gap: 8px; padding: 9px 12px; }
+.pt-company-stock-company small { background: var(--o-brand-primary, #714b67); border-radius: 99px; color: #fff; font-size: .62rem; font-weight: 700; margin-left: auto; padding: 3px 7px; }
+.pt-company-stock-company-summary { min-height: 35px; padding: 6px 10px; }
+.pt-company-stock-inline-qty { align-items: baseline; color: #0f172a; display: flex; gap: 4px; margin-left: auto; }
+.pt-company-stock-inline-qty strong { font-size: .92rem; }
+.pt-company-stock-inline-qty small { background: transparent; color: #64748b; font-size: .67rem; margin: 0; padding: 0; }
+.pt-company-stock-details { border: 0; }
+.pt-company-stock-details summary { align-items: center; color: #475569; cursor: pointer; display: flex; font-size: .78rem; font-weight: 700; justify-content: space-between; list-style: none; padding: 9px 12px; }
+.pt-company-stock-details summary::-webkit-details-marker { display: none; }
+.pt-company-stock-details summary span { align-items: center; display: flex; gap: 7px; }
+.pt-company-stock-chevron { color: var(--o-brand-primary, #714b67); transition: transform .2s ease; }
+.pt-company-stock-details[open] .pt-company-stock-chevron { transform: rotate(180deg); }
+.pt-company-stock-warehouses { padding: 0 12px 5px; }
+.pt-company-stock-warehouse { align-items: center; border-bottom: 1px solid rgba(148, 163, 184, .2); display: flex; gap: 10px; padding: 7px 0; }
+.pt-company-stock-warehouse:last-child { border-bottom: 0; }
+.pt-company-stock-warehouse-name { align-items: center; color: #334155; display: flex; flex: 1 1 auto; font-size: .8rem; font-weight: 650; gap: 7px; min-width: 0; }
+.pt-company-stock-warehouse-name > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pt-company-stock-warehouse-name small { background: rgba(100, 116, 139, .12); border-radius: 5px; color: #64748b; font-size: .65rem; font-weight: 700; padding: 2px 5px; }
+.pt-company-stock-qty { background: color-mix(in srgb, var(--o-brand-primary, #714b67) 12%, #fff); border-radius: 7px; color: var(--o-brand-primary, #714b67); font-size: .83rem; padding: 4px 6px; white-space: nowrap; }
+.pt-company-stock-qty small { font-size: .65rem; font-weight: 650; }
+.pt-company-stock-forecast { color: #64748b; font-size: .7rem; white-space: nowrap; }
+.pt-company-stock-forecast b { color: #475569; }
+.pt-company-stock-empty { color: #64748b; font-size: .8rem; font-style: italic; padding: 8px 0; }
+@media (max-width: 576px) { .pt-company-stock-warehouse { align-items: flex-start; flex-wrap: wrap; } .pt-company-stock-forecast { margin-left: 0; width: 100%; } }
+
 .pos .pt-cart-toolbar { display: flex; justify-content: flex-end; margin-bottom: 6px; }
 .pos .pt-clear-cart { align-items: center; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 8px; color: #be123c; display: inline-flex; font-size: .78rem; font-weight: 700; gap: 6px; padding: 7px 10px; }
 .pos .pt-clear-cart:hover:not(:disabled) { background: #ffe4e6; }

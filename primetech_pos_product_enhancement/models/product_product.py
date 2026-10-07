@@ -42,3 +42,50 @@ class ProductProduct(models.Model):
                     quantities[product_id] = (group.get("quantity", 0.0) or 0.0) - (group.get("reserved_quantity", 0.0) or 0.0)
         for product in products:
             product["primetech_pos_qty"] = quantities.get(product["id"], 0.0)
+
+    def get_product_info_pos(self, price, quantity, pos_config_id):
+        """Expose stock only for companies the current user may access."""
+        self.ensure_one()
+        result = super().get_product_info_pos(price, quantity, pos_config_id)
+        company_stock = []
+        Warehouse = self.env["stock.warehouse"]
+        pos_company = self.env["pos.config"].browse(pos_config_id).company_id
+        # Do not filter on the company's active flag: access is determined by
+        # the companies assigned to the current user.
+        companies = self.env.user.company_ids.sorted(
+            key=lambda company: company.id != pos_company.id
+        )
+        for company in companies:
+            product_in_company = self.with_context(
+                allowed_company_ids=[company.id],
+                force_company=company.id,
+            )
+            show_warehouses = company == pos_company
+            warehouse_stock = []
+            if show_warehouses:
+                warehouses = Warehouse.search([("company_id", "=", company.id)])
+                warehouse_stock = [
+                    {
+                        "id": warehouse.id,
+                        "name": warehouse.name,
+                        "code": warehouse.code,
+                        "available_quantity": product_in_company.with_context(
+                            warehouse_id=warehouse.id
+                        ).qty_available,
+                        "forecasted_quantity": product_in_company.with_context(
+                            warehouse_id=warehouse.id
+                        ).virtual_available,
+                        "uom": self.uom_name,
+                    }
+                    for warehouse in warehouses
+                ]
+            company_stock.append({
+                "id": company.id,
+                "name": company.name,
+                "show_warehouses": show_warehouses,
+                "available_quantity": product_in_company.qty_available,
+                "uom": self.uom_name,
+                "warehouses": warehouse_stock,
+            })
+        result["primetech_company_stock"] = company_stock
+        return result
