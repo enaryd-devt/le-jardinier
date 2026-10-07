@@ -174,7 +174,7 @@
     position: absolute;
 
     top: 10px;
-    right: 10px;
+    left: 10px;
 
     min-width: 30px;
     height: 30px;
@@ -270,8 +270,7 @@
 
     border-radius: 10px;
 
-    background:
-        rgba(15,23,42,0.92);
+    background: var(--o-brand-primary, #714b67);
 
     color: white;
 
@@ -330,10 +329,9 @@
 
     border-radius: 10px;
 
-    background:
-        rgba(255,255,255,0.96);
+    background: var(--o-brand-primary, #714b67);
 
-    color: #0f172a;
+    color: #fff;
 
     display: flex;
     align-items: center;
@@ -346,7 +344,7 @@
     backdrop-filter: blur(8px);
 
     box-shadow:
-        0 3px 8px rgba(0,0,0,0.12);
+        0 3px 8px color-mix(in srgb, var(--o-brand-primary, #714b67) 35%, transparent);
 
     transition:
         transform 0.2s ease,
@@ -361,10 +359,9 @@
 
     transform: scale(1.08);
 
-    background:
-        rgba(15,23,42,0.96);
+    background: color-mix(in srgb, var(--o-brand-primary, #714b67) 82%, #000);
 
-    color: white;
+    color: #fff;
 
     box-shadow:
         0 8px 18px rgba(0,0,0,0.18);
@@ -691,3 +688,62 @@
 
     color: white;
 }
+
+.pos .pt-product-stock-empty { background: linear-gradient(145deg, #87919e, #6e7885) !important; border-color: #5e6874 !important; box-shadow: inset 0 0 20px rgba(0, 0, 0, .22) !important; filter: none !important; opacity: .82 !important; transform: none !important; }
+.pos .pt-product-stock-empty img { filter: grayscale(1) brightness(.68) !important; }
+.pos .pt-product-stock-empty .product-name, .pos .pt-product-stock-empty .pt-stock-badge, .pos .pt-product-stock-empty .pt-price-badge { opacity: .62; }
+.pos .pt-product-stock-empty .product-name { color: #eef2f6 !important; }
+.pos .pt-product-stock-empty:hover, .pos .pt-product-stock-empty:hover img { filter: grayscale(1) brightness(.68) !important; transform: none !important; box-shadow: inset 0 0 20px rgba(0, 0, 0, .22) !important; }
+.pos .pt-product-unavailable { cursor: not-allowed; }
+
+/* Product information button: use the active Odoo theme instead of the
+   default corner triangle, and keep it usable on an out-of-stock card. */
+.pos .product .product-information-tag {
+    align-items: center;
+    background: var(--o-brand-primary, #714b67);
+    border: 2px solid rgba(255, 255, 255, .9);
+    border-radius: 50%;
+    box-shadow: 0 3px 10px color-mix(in srgb, var(--o-brand-primary, #714b67) 42%, transparent);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    height: 30px;
+    justify-content: center;
+    position: absolute;
+    right: 9px;
+    top: 9px;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(.72);
+    transition: transform .2s ease, box-shadow .2s ease, background .2s ease, opacity .18s ease;
+    width: 30px;
+    z-index: 45;
+}
+
+.pos .product .product-information-tag-logo {
+    left: auto;
+    position: static;
+    top: auto;
+}
+
+.pos .product:hover .product-information-tag,
+.pos .product:focus-visible .product-information-tag {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+}
+
+.pos .product .product-information-tag:hover {
+    background: color-mix(in srgb, var(--o-brand-primary, #714b67) 82%, #000);
+    box-shadow: 0 7px 16px color-mix(in srgb, var(--o-brand-primary, #714b67) 38%, transparent);
+    transform: translateY(-2px) scale(1.12) rotate(8deg);
+}
+
+.pos .product .product-information-tag:active {
+    transform: scale(.94);
+}
+
+.pos .pt-cart-toolbar { display: flex; justify-content: flex-end; margin-bottom: 6px; }
+.pos .pt-clear-cart { align-items: center; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 8px; color: #be123c; display: inline-flex; font-size: .78rem; font-weight: 700; gap: 6px; padding: 7px 10px; }
+.pos .pt-clear-cart:hover:not(:disabled) { background: #ffe4e6; }
+.pos .pt-clear-cart:disabled { cursor: not-allowed; opacity: .45; }

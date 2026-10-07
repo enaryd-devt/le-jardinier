@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_pos_config_form_primetech_order_sequence" model="ir.ui.view">
+    <field name="name">pos.config.form.primetech.order.sequence</field>
+    <field name="model">pos.config</field>
+    <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
+    <field name="arch" type="xml">
+      <!-- The second container is the standard POS settings panel (the first is
+           only displayed while creating a restaurant POS configuration).  Put
+           these settings first so they are visible immediately on opening a POS. -->
+      <xpath expr="//div[contains(@class, 'o_settings_container')][2]/setting[1]" position="before">
+        <setting string="Numérotation des commandes PrimeTech" help="Définissez la séquence et le nombre de chiffres du numéro de commande.">
+          <div class="content-group">
+            <field name="primetech_order_sequence_id" options="{'no_create': True}"/>
+            <field name="primetech_order_padding"/>
+          </div>
+        </setting>
+        <setting string="Niveaux de stock PrimeTech" help="Les seuils déterminent les couleurs affichées sur les cartes produits.">
+          <div class="content-group">
+            <field name="primetech_stock_critical_level"/>
+            <field name="primetech_stock_warning_level"/>
+            <div class="text-muted">Rouge : critique · Orange : alerte · Vert : niveau normal</div>
+          </div>
+        </setting>
+        <setting string="Vente à stock négatif" help="Autorisez certains utilisateurs à vendre un article même lorsque son stock est épuisé.">
+          <field name="primetech_allow_negative_stock"/>
+          <div class="content-group" invisible="not primetech_allow_negative_stock">
+            <field name="primetech_negative_stock_user_ids" widget="many2many_tags"/>
+          </div>
+        </setting>
+      </xpath>
+    </field>
+  </record>
+</odoo>

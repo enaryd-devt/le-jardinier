@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+  <t t-inherit="point_of_sale.Navbar" t-inherit-mode="extension" owl="1">
+    <xpath expr="//OrderTabs" position="before">
+      <img class="pos-logo pt-pos-logo-left" height="42" t-on-click="() => debug.toggleWidget()" t-attf-src="/web/image?model=res.company&amp;id={{pos.company.id}}&amp;field=logo" alt="Logo"/>
+    </xpath>
+    <xpath expr="//div[contains(@class, 'pos-centerheader')]" position="replace"><div t-if="!ui.isSmall" class="pos-centerheader pt-pos-center-spacer"/></xpath>
+    <xpath expr="//Input[@placeholder.translate='Search products...']" position="attributes"><attribute name="class">'p-0 pt-pos-search'</attribute></xpath>
+    <xpath expr="//Dropdown" position="before">
+      <button class="pt-pos-reload" t-on-click="reloadCatalogue" t-att-disabled="ptReloading.value" title="Recharger le catalogue"><i t-att-class="{'fa': true, 'fa-refresh': true, 'fa-spin': ptReloading.value}"/> <span>Recharger</span></button>
+      <span class="pt-pos-clock"><i class="fa fa-clock-o"/> <t t-esc="ptClock.value"/></span>
+    </xpath>
+  </t>
+  <t t-inherit="point_of_sale.ProductScreen" t-inherit-mode="extension" owl="1">
+    <xpath expr="//OrderSummary" position="before">
+      <div class="pt-cart-toolbar">
+        <button class="pt-clear-cart" t-on-click="clearCart" t-att-disabled="currentOrder?.is_empty()" title="Vider le panier"><i class="fa fa-trash"/> <span>Vider</span></button>
+      </div>
+    </xpath>
+    <xpath expr="//div[contains(@class, 'rightpane')]" position="inside">
+      <footer class="pt-pos-footer"><span><i class="fa fa-cash-register"/> <b>Caisse :</b> <t t-esc="pos.config.name"/></span><span><i class="fa fa-user"/> <b>Utilisateur :</b> <t t-esc="ptCashierName"/></span><span><i class="fa fa-building"/> <b>Entrepôt de déstockage :</b> <t t-esc="ptWarehouseName"/></span></footer>
+    </xpath>
+  </t>
+</templates>
