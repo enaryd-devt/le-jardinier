@@ -48,6 +48,30 @@ patch(Navbar.prototype, {
 });
 
 patch(ProductScreen.prototype, {
+    async addProductToOrder(product) {
+        const order = this.currentOrder;
+        const existingLine = order?.lines.find(
+            (line) =>
+                line.product_id?.id === product.id &&
+                line.price_type === "original" &&
+                line.get_discount?.() === 0 &&
+                !line.getNote?.() &&
+                !line.get_customer_note?.() &&
+                !line.refunded_orderline_id &&
+                !line.isLotTracked?.() &&
+                !line.isPartOfCombo?.()
+        );
+
+        if (existingLine) {
+            existingLine.set_quantity(existingLine.get_quantity() + 1);
+            order.select_orderline(existingLine);
+            order.recomputeOrderData();
+            return existingLine;
+        }
+
+        return super.addProductToOrder(...arguments);
+    },
+
     clearCart() {
         const order = this.currentOrder;
         if (!order || order.is_empty()) {

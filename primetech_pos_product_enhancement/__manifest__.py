@@ -1,6 +1,6 @@
 {
     "name": "PrimeTech POS Product Enhancement",
-    "version": "18.0.1.0.0",
+    "version": "18.0.1.0.1",
     "category": "Point of Sale",
     "summary": "Advanced product card UI with stock, pricing, margins and warehouse info in POS",
     "author": "PrimeTech Services",
@@ -16,6 +16,7 @@
             "primetech_pos_product_enhancement/static/src/js/pos_order_line_stock_patch.js",
             "primetech_pos_product_enhancement/static/src/js/pos_interface_patch.js",
             "primetech_pos_product_enhancement/static/src/js/pos_payment_stock_reload.js",
+            "primetech_pos_product_enhancement/static/src/js/pos_light_order_sync.js",
 
             "primetech_pos_product_enhancement/static/src/xml/product_card_templates.xml",
             "primetech_pos_product_enhancement/static/src/xml/pos_interface_templates.xml",

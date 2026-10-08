@@ -8,7 +8,7 @@ patch(PosOrderline.prototype, {
     set_quantity(quantity, keep_price) {
         const requestedQty = typeof quantity === "number" ? quantity : Number.parseFloat(quantity);
         const product = this.product_id;
-        const stockQty = Number(product?.primetech_pos_qty);
+        const stockQty = Number(product?.primetech_pos_total_qty);
         const activeUserId = this.models["res.users"]?.getFirst()?.id;
         const allowedUsers = this.config.raw?.primetech_negative_stock_user_ids || [];
         const canSellNegativeStock = Boolean(

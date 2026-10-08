@@ -36,7 +36,7 @@ patch(ProductCard.prototype, {
     },
 
     get remainingQty() {
-        return this.warehouseQty - this.productQtyInCurrentOrder;
+        return this.totalWarehouseQty - this.productQtyInCurrentOrder;
     },
 
     get isOutOfStock() {
@@ -72,7 +72,7 @@ patch(ProductCard.prototype, {
     },
 
     get formattedWarehouseQty() {
-        return this.env.utils.formatProductQty(this.totalWarehouseQty, false);
+        return this.env.utils.formatProductQty(Math.max(0, this.remainingQty), false);
     },
 
     get formattedSalesPrice() {

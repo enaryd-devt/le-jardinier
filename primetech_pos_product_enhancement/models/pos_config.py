@@ -5,6 +5,12 @@ from odoo.exceptions import ValidationError
 class PosConfig(models.Model):
     _inherit = "pos.config"
 
+    def notify_synchronisation(self, session_id, login_number, records=None):
+        """Avoid Odoo's full open-order refresh for the lightweight POS sync."""
+        if self.env.context.get("primetech_light_order_sync"):
+            return
+        return super().notify_synchronisation(session_id, login_number, records or {})
+
     primetech_order_sequence_id = fields.Many2one(
         "ir.sequence", string="Séquence des commandes POS", copy=False,
         help="Numéro des commandes POS : COM + année/mois/jour + compteur.",
