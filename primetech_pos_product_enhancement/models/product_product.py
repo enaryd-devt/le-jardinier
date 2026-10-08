@@ -8,11 +8,12 @@ class ProductProduct(models.Model):
     # Sa valeur est remplacée, à chaque chargement POS, par celle de la
     # localisation source du point de vente.
     primetech_pos_qty = fields.Float(string="Quantité POS", readonly=True)
+    primetech_pos_total_qty = fields.Float(string="Quantité totale POS", readonly=True)
 
     @api.model
     def _load_pos_data_fields(self, config_id):
         fields = super()._load_pos_data_fields(config_id)
-        for name in ("standard_price", "qty_available", "virtual_available", "primetech_pos_qty"):
+        for name in ("standard_price", "qty_available", "virtual_available", "primetech_pos_qty", "primetech_pos_total_qty"):
             if name not in fields:
                 fields.append(name)
         return fields
@@ -27,6 +28,7 @@ class ProductProduct(models.Model):
         source_location = warehouse.view_location_id or config.picking_type_id.default_location_src_id
         ids = [product["id"] for product in products]
         quantities = dict.fromkeys(ids, 0.0)
+        total_quantities = dict.fromkeys(ids, 0.0)
         if source_location and ids:
             groups = self.env["stock.quant"].read_group(
                 [
@@ -40,8 +42,25 @@ class ProductProduct(models.Model):
                 product_id = group.get("product_id") and group["product_id"][0]
                 if product_id:
                     quantities[product_id] = (group.get("quantity", 0.0) or 0.0) - (group.get("reserved_quantity", 0.0) or 0.0)
+        if ids:
+            total_groups = self.env["stock.quant"].read_group(
+                [
+                    ("product_id", "in", ids),
+                    ("company_id", "=", config.company_id.id),
+                    ("location_id.usage", "=", "internal"),
+                ],
+                ["product_id", "quantity:sum", "reserved_quantity:sum"], ["product_id"], lazy=False,
+            )
+            for group in total_groups:
+                product_id = group.get("product_id") and group["product_id"][0]
+                if product_id:
+                    total_quantities[product_id] = (
+                        (group.get("quantity", 0.0) or 0.0)
+                        - (group.get("reserved_quantity", 0.0) or 0.0)
+                    )
         for product in products:
             product["primetech_pos_qty"] = quantities.get(product["id"], 0.0)
+            product["primetech_pos_total_qty"] = total_quantities.get(product["id"], 0.0)
 
     def get_product_info_pos(self, price, quantity, pos_config_id):
         """Expose stock only for companies the current user may access."""

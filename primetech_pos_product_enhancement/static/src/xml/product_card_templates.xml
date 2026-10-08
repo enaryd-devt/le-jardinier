@@ -13,7 +13,8 @@
       <attribute name="title">Informations du produit</attribute>
     </xpath>
     <xpath expr="//article" position="inside">
-      <div t-if="isStockTracked" class="pt-stock-badge" t-att-class="stockClass">
+      <div t-if="isStockTracked" class="pt-stock-badge" t-att-class="stockClass"
+           title="Quantité totale disponible dans tous les entrepôts">
         <i class="fa fa-cubes"/>
         <span><t t-esc="formattedWarehouseQty"/></span>
       </div>

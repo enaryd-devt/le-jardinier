@@ -15,6 +15,7 @@
             "primetech_pos_product_enhancement/static/src/js/product_card_patch.js",
             "primetech_pos_product_enhancement/static/src/js/pos_order_line_stock_patch.js",
             "primetech_pos_product_enhancement/static/src/js/pos_interface_patch.js",
+            "primetech_pos_product_enhancement/static/src/js/pos_payment_stock_reload.js",
 
             "primetech_pos_product_enhancement/static/src/xml/product_card_templates.xml",
             "primetech_pos_product_enhancement/static/src/xml/pos_interface_templates.xml",

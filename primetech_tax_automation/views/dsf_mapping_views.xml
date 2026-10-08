@@ -8,6 +8,7 @@
                 <field name="name"/>
                 <field name="sheet_name"/>
                 <field name="cell_address"/>
+                <field name="account_prefixes"/>
                 <field name="account_ids" widget="many2many_tags"/>
                 <field name="amount_type"/>
                 <field name="active"/>
@@ -26,6 +27,7 @@
                         <field name="sheet_name"/>
                         <field name="template_cell_id" widget="selection" options="{'no_create': True, 'no_open': True}"/>
                         <field name="cell_address" invisible="1"/>
+                        <field name="account_prefixes" placeholder="Ex. 411, 412"/>
                         <field name="account_ids" widget="many2many_tags" options="{'no_create_edit': True}"/>
                         <field name="amount_type"/>
                         <field name="multiplier"/>

@@ -86,6 +86,7 @@ class PrimetechDsfGenerationWizard(models.TransientModel):
         self._set_document_headers(workbook)
         date_from = date(self.fiscal_year_date.year, 1, 1)
         date_to = date(self.fiscal_year_date.year, 12, 31)
+        self.env["primetech.dsf.mapping"].ensure_ohada_defaults(self.company_id)
         mappings = self.env["primetech.dsf.mapping"].search([
             ("company_id", "=", self.company_id.id), ("active", "=", True),
         ])
