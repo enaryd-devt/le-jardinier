@@ -117,6 +117,13 @@ class PosOrder(models.Model):
             lines_by_source[source_id] |= line
 
         for source_id, source_lines in lines_by_source.items():
+            # Check before creating the stock moves.  Creating a POS move can
+            # reserve its own quantity; checking afterwards then makes the
+            # available quantity appear as zero and wrongly leaves a fully
+            # available delivery waiting.
+            can_validate = self._primetech_source_has_required_stock(
+                source_lines, source_id
+            )
             picking = self.env["stock.picking"].create(
                 self.env["stock.picking"]._prepare_picking_vals(
                     self.partner_id, picking_type, source_id, destination_id
@@ -124,7 +131,7 @@ class PosOrder(models.Model):
             )
             picking._create_move_from_pos_order_lines(source_lines)
             self.env.flush_all()
-            if self._primetech_source_has_required_stock(source_lines, source_id):
+            if can_validate:
                 try:
                     with self.env.cr.savepoint():
                         picking._action_done()

@@ -1,6 +1,6 @@
 {
     "name": "PrimeTech POS Product Enhancement",
-    "version": "18.0.1.0.1",
+    "version": "18.0.1.0.2",
     "category": "Point of Sale",
     "summary": "Advanced product card UI with stock, pricing, margins and warehouse info in POS",
     "author": "PrimeTech Services",
