@@ -93,6 +93,37 @@ OHADA_DSF_DEFAULTS = [
 ]
 
 
+# Les lignes de flux qui correspondent directement à des écritures ou à une
+# variation de solde. Les lignes de total (FA, ZB, ZC, ...) restent calculées
+# par le classeur officiel et ne doivent jamais être écrasées.
+OHADA_DSF_CASH_FLOW_DEFAULTS = [
+    ("TABLEAU DES FLUX DE TRESORERIE", "E10", "Trésorerie nette à l'ouverture", "52,53,54,57,58,519,56", 1, "balance", "opening_balance"),
+    ("TABLEAU DES FLUX DE TRESORERIE", "E13", "Variation actif circulant HAO", "485", -1, "balance", "balance_change"),
+    ("TABLEAU DES FLUX DE TRESORERIE", "E14", "Variation des stocks", "3,39", -1, "balance", "balance_change"),
+    ("TABLEAU DES FLUX DE TRESORERIE", "E15", "Variation des créances", "409,411,412,42,43,44,45,46,47,488", -1, "balance", "balance_change"),
+    ("TABLEAU DES FLUX DE TRESORERIE", "E16", "Variation du passif circulant", "401,402,403,404,405,406,407,408,419,499", -1, "balance", "balance_change"),
+    ("TABLEAU DES FLUX DE TRESORERIE", "E20", "Décaissements immobilisations incorporelles", "21", -1, "debit", "period"),
+    ("TABLEAU DES FLUX DE TRESORERIE", "E21", "Décaissements immobilisations corporelles", "22,23,24,25", -1, "debit", "period"),
+    ("TABLEAU DES FLUX DE TRESORERIE", "E22", "Décaissements immobilisations financières", "26,27", -1, "debit", "period"),
+    ("TABLEAU DES FLUX DE TRESORERIE", "E23", "Encaissements cessions d'immobilisations", "82", 1, "credit", "period"),
+    ("TABLEAU DES FLUX DE TRESORERIE", "E24", "Encaissements cessions d'immobilisations financières", "82", 1, "credit", "period"),
+    ("TABLEAU DES FLUX DE TRESORERIE", "E27", "Augmentation de capital", "10", -1, "balance", "balance_change"),
+    ("TABLEAU DES FLUX DE TRESORERIE", "E28", "Subventions d'investissement reçues", "14", -1, "balance", "balance_change"),
+    ("TABLEAU DES FLUX DE TRESORERIE", "E29", "Prélèvements sur le capital", "10", -1, "debit", "period"),
+    ("TABLEAU DES FLUX DE TRESORERIE", "E30", "Dividendes versés", "465", -1, "debit", "period"),
+    ("TABLEAU DES FLUX DE TRESORERIE", "E33", "Emprunts reçus", "16,17", 1, "credit", "period"),
+    ("TABLEAU DES FLUX DE TRESORERIE", "E34", "Autres dettes financières", "18", 1, "credit", "period"),
+    ("TABLEAU DES FLUX DE TRESORERIE", "E35", "Remboursements emprunts et dettes financières", "16,17,18", -1, "debit", "period"),
+]
+
+
+DSF_DEFAULT_MAPPINGS = [
+    (sheet_name, cell_address, name, prefixes, multiplier, "balance",
+     "closing_balance" if sheet_name == "BILAN PAYSAGE" else "period")
+    for sheet_name, cell_address, name, prefixes, multiplier in OHADA_DSF_DEFAULTS
+] + OHADA_DSF_CASH_FLOW_DEFAULTS
+
+
 class PrimetechDsfMapping(models.Model):
     _name = "primetech.dsf.mapping"
     _description = "Correspondance DSF"
@@ -104,7 +135,7 @@ class PrimetechDsfMapping(models.Model):
     template_cell_id = fields.Many2one(
         "primetech.dsf.template.cell",
         string="Cellule Excel",
-        domain="[('sheet_name', '=', sheet_name)]",
+        domain="[('sheet_name', '=', sheet_name), ('active', '=', True)]",
         ondelete="restrict",
     )
     cell_address = fields.Char(string="Cellule Excel", required=True, help="Ex. E11 ou K22")
@@ -118,6 +149,12 @@ class PrimetechDsfMapping(models.Model):
         ("debit", "Mouvements débiteurs"),
         ("credit", "Mouvements créditeurs"),
     ], string="Montant", required=True, default="balance")
+    calculation_scope = fields.Selection([
+        ("period", "Mouvements de l'exercice"),
+        ("closing_balance", "Solde à la clôture"),
+        ("opening_balance", "Solde à l'ouverture"),
+        ("balance_change", "Variation de solde"),
+    ], string="Base de calcul", required=True, default="period")
     multiplier = fields.Float(string="Coefficient", default=1.0)
     active = fields.Boolean(default=True)
 
@@ -150,23 +187,29 @@ class PrimetechDsfMapping(models.Model):
         account_ids = self.account_ids | self._accounts_from_prefixes()
         if not account_ids:
             return 0.0
-        domain = [
+        base_domain = [
             ("company_id", "=", self.company_id.id),
             ("account_id", "in", account_ids.ids),
-            ("date", ">=", date_from),
-            ("date", "<=", date_to),
             ("move_id.state", "=", "posted"),
         ]
-        grouped = self.env["account.move.line"].read_group(
-            domain, ["debit:sum", "credit:sum"], []
-        )
-        debit = grouped[0].get("debit", 0.0) if grouped else 0.0
-        credit = grouped[0].get("credit", 0.0) if grouped else 0.0
-        amount = {
-            "balance": debit - credit,
-            "debit": debit,
-            "credit": credit,
-        }[self.amount_type]
+        def amount_for(domain):
+            grouped = self.env["account.move.line"].read_group(
+                domain, ["debit:sum", "credit:sum"], []
+            )
+            debit = grouped[0].get("debit", 0.0) if grouped else 0.0
+            credit = grouped[0].get("credit", 0.0) if grouped else 0.0
+            return {"balance": debit - credit, "debit": debit, "credit": credit}[self.amount_type]
+
+        if self.calculation_scope == "period":
+            amount = amount_for(base_domain + [("date", ">=", date_from), ("date", "<=", date_to)])
+        elif self.calculation_scope == "closing_balance":
+            amount = amount_for(base_domain + [("date", "<=", date_to)])
+        elif self.calculation_scope == "opening_balance":
+            amount = amount_for(base_domain + [("date", "<", date_from)])
+        else:
+            closing = amount_for(base_domain + [("date", "<=", date_to)])
+            opening = amount_for(base_domain + [("date", "<", date_from)])
+            amount = closing - opening
         return amount * self.multiplier
 
     def _accounts_from_prefixes(self):
@@ -182,10 +225,17 @@ class PrimetechDsfMapping(models.Model):
     @api.model
     def ensure_ohada_defaults(self, company):
         """Create once the standard DSF mapping; local overrides are preserved."""
-        for sheet_name, cell_address, name, prefixes, multiplier in OHADA_DSF_DEFAULTS:
-            if not self.search_count([
+        # Cache the selectable rubrics only for cells supplied by the standard
+        # accounting extraction.  This deliberately leaves the other, empty
+        # sheets of the official workbook without selectable cells.
+        template_cells = self.env["primetech.dsf.template.cell"].sudo()
+        for sheet_name in {entry[0] for entry in DSF_DEFAULT_MAPPINGS}:
+            template_cells.ensure_sheet_cells(sheet_name)
+        for sheet_name, cell_address, name, prefixes, multiplier, amount_type, calculation_scope in DSF_DEFAULT_MAPPINGS:
+            mapping = self.search([
                 ("company_id", "=", company.id), ("sheet_name", "=", sheet_name), ("cell_address", "=", cell_address),
-            ]):
+            ], limit=1)
+            if not mapping:
                 self.create({
                     "name": name,
                     "company_id": company.id,
@@ -193,6 +243,13 @@ class PrimetechDsfMapping(models.Model):
                     "cell_address": cell_address,
                     "account_prefixes": prefixes,
                     "multiplier": multiplier,
+                    "amount_type": amount_type,
+                    "calculation_scope": calculation_scope,
+                })
+            else:
+                mapping.write({
+                    "amount_type": amount_type,
+                    "calculation_scope": calculation_scope,
                 })
 
     @api.constrains("cell_address")

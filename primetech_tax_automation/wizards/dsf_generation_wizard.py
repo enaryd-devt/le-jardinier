@@ -72,8 +72,24 @@ class PrimetechDsfGenerationWizard(models.TransientModel):
             ),
         )
         self._set_excel_value(cover, "A33", "N° D'IDENTIFICATION FISCALE: %s" % (company.vat or ""))
-        return
-        cover["A33"] = "N° D'IDENTIFICATION FISCALE: %s" % (company.vat or "")
+    @staticmethod
+    def _set_cash_flow_formulas(workbook):
+        """Fill DSF cash-flow subtotal cells from their extracted lines."""
+        sheet_name = "TABLEAU DES FLUX DE TRESORERIE"
+        if sheet_name not in workbook.sheetnames:
+            return
+        sheet = workbook[sheet_name]
+        for address, formula in {
+            "E17": "=SUM(E13:E16)",
+            "E18": "=E12+E17",
+            "E25": "=SUM(E20:E24)",
+            "E31": "=SUM(E27:E30)",
+            "E36": "=SUM(E33:E35)",
+            "E37": "=E31+E36",
+            "E38": "=E18+E25+E37",
+            "E39": "=E10+E38",
+        }.items():
+            sheet[address] = formula
 
     def action_generate_dsf(self):
         self.ensure_one()
@@ -103,6 +119,7 @@ class PrimetechDsfGenerationWizard(models.TransientModel):
                 )
             except ValueError:
                 raise UserError(_("Cellule Excel invalide : %s (%s).") % (mapping.cell_address, mapping.name))
+        self._set_cash_flow_formulas(workbook)
         output = io.BytesIO()
         workbook.save(output)
         filename = "DSF_%s_%s.xlsx" % (self.company_id.name.replace("/", "-"), self.fiscal_year_date.year)

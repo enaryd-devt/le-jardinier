@@ -8,6 +8,17 @@ from odoo.tools import float_is_zero
 class PosOrder(models.Model):
     _inherit = "pos.order"
 
+    @api.model
+    def sync_from_ui(self, orders):
+        """A seller may send drafts, but never record a payment or a refund."""
+        if self.env.user.has_group("primetech_pos_product_enhancement.group_pos_seller"):
+            for order in orders:
+                if order.get("state") != "draft" or order.get("payment_ids"):
+                    raise UserError(
+                        "Un vendeur peut uniquement envoyer une commande brouillon pour encaissement."
+                    )
+        return super().sync_from_ui(orders)
+
     def _primetech_notify_light_order_sync(self):
         """Broadcast only the changed order and its lines to devices of this POS."""
         self.ensure_one()

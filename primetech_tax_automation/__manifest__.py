@@ -1,6 +1,6 @@
 {
     'name': 'Fiscalité',
-    'version': '18.0.2.2.0',
+    'version': '18.0.2.3.0',
     'summary': 'Préparation fiscale connectée à la comptabilité, aux factures, au POS et aux règlements',
     'description': '''Préparation et contrôle fiscal pour Odoo 18.
 

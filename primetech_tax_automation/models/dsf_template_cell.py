@@ -1,10 +1,8 @@
 """Selectable cells of the official DGI DSF workbook."""
 
-from openpyxl import load_workbook
-from openpyxl.cell.cell import MergedCell
-
 from odoo import api, fields, models
-from odoo.modules.module import get_module_resource
+
+from .dsf_mapping import DSF_DEFAULT_MAPPINGS
 
 
 class PrimetechDsfTemplateCell(models.Model):
@@ -15,6 +13,7 @@ class PrimetechDsfTemplateCell(models.Model):
     name = fields.Char(required=True, readonly=True)
     sheet_name = fields.Char(required=True, readonly=True, index=True)
     cell_address = fields.Char(required=True, readonly=True, index=True)
+    active = fields.Boolean(default=True, readonly=True)
 
     _sql_constraints = [
         ("dsf_template_cell_unique", "unique(sheet_name, cell_address)", "Cette cellule DSF existe déjà."),
@@ -22,38 +21,22 @@ class PrimetechDsfTemplateCell(models.Model):
 
     @api.model
     def ensure_sheet_cells(self, sheet_name):
-        """Index only numeric, writable cells of the selected DSF sheet."""
+        """Index only the DSF cells populated by the accounting extraction."""
         if not sheet_name:
             return self.browse()
+        expected = {
+            cell_address: name
+            for target_sheet, cell_address, name, _prefixes, _multiplier, _amount_type, _calculation_scope in DSF_DEFAULT_MAPPINGS
+            if target_sheet == sheet_name
+        }
         existing = self.search([("sheet_name", "=", sheet_name)])
-        if existing:
-            return existing
-
-        template_path = get_module_resource("primetech_tax_automation", "data", "dsf_normal_dgiformat.xlsx")
-        workbook = load_workbook(template_path, read_only=False, data_only=False)
-        if sheet_name not in workbook.sheetnames:
-            return self.browse()
-        sheet = workbook[sheet_name]
-        used_rows = {cell.row for cell in sheet._cells.values() if cell.value not in (None, "")}
-        values = []
-        for cell in sheet._cells.values():
-            if (
-                isinstance(cell, MergedCell)
-                or cell.value is not None
-                or cell.row not in used_rows
-                or "#,##0" not in (cell.number_format or "")
-            ):
-                continue
-            label = ""
-            for column in range(cell.column - 1, 0, -1):
-                neighbour = sheet._cells.get((cell.row, column))
-                if neighbour and isinstance(neighbour.value, str) and neighbour.value.strip():
-                    label = " ".join(neighbour.value.split())[:100]
-                    break
-            display_name = cell.coordinate if not label else "%s — %s" % (cell.coordinate, label)
-            values.append({
-                "name": display_name,
-                "sheet_name": sheet_name,
-                "cell_address": cell.coordinate,
-            })
-        return self.create(values)
+        existing.filtered(lambda cell: cell.cell_address not in expected).write({"active": False})
+        indexed = {cell.cell_address: cell for cell in existing if cell.cell_address in expected}
+        for cell_address, name in expected.items():
+            values = {"name": "%s - %s" % (cell_address, name), "active": True}
+            cell = indexed.get(cell_address)
+            if cell:
+                cell.write(values)
+            else:
+                self.create({**values, "sheet_name": sheet_name, "cell_address": cell_address})
+        return self.search([("sheet_name", "=", sheet_name), ("active", "=", True)])
