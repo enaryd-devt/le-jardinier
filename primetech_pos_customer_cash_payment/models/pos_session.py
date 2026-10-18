@@ -128,6 +128,7 @@ class PosSession(models.Model):
             "memo": reason or _("Paiement partenaire au POS"),
             "pos_session_id": session.id,
             "pos_customer_cash_payment": True,
+            "pos_payment_method_id": pos_payment_method.id,
             "pos_balance_before": before,
         })
         payment.action_post()
@@ -168,6 +169,8 @@ class PosSession(models.Model):
             "balance_before": payment.pos_balance_before,
             "balance_after": payment.pos_balance_after,
             "payment_type": payment.payment_type,
+            "payment_method_name": payment.pos_payment_method_id.name or payment.journal_id.name,
+            "reconciliation_account": _("Compte client") if payment.partner_type == "customer" else _("Compte fournisseur"),
             "reason": payment.payment_reference or "",
             # Keep the original payment timestamp when displaying or reprinting
             # an entry from the POS history.
