@@ -123,7 +123,7 @@
             <footer class="customer-cash-payments-screen__footer">
                 <span class="customer-cash-payments__page">Page <t t-esc="state.page + 1"/> sur <t t-esc="totalPages"/></span>
                 <div class="d-flex gap-2">
-                    <button class="btn btn-light" t-att-disabled="state.page === 0" t-on-click="() => changePage(-1)">PrÃ©cÃ©dent</button>
+                    <button class="btn btn-light" t-att-disabled="state.page === 0" t-on-click="() => changePage(-1)">Pr&#233;c&#233;dent</button>
                     <button class="btn btn-light" t-att-disabled="state.page + 1 >= totalPages" t-on-click="() => changePage(1)">Suivant</button>
                 </div>
             </footer>
