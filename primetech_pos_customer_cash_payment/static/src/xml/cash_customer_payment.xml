@@ -29,7 +29,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col form-floating">
+            <div t-if="hasSelectedPartner" class="col form-floating">
                 <select class="form-select" id="pos-partner-payment-method" t-model="state.pos_payment_method_id" t-att-disabled="partnerPaymentModes.loading || !hasSelectedPartner">
                     <option value="">Choisir un mode de paiement</option>
                     <t t-foreach="partnerPaymentModes.items" t-as="method" t-key="method.id">
@@ -38,8 +38,9 @@
                 </select>
                 <label for="pos-partner-payment-method">Mode de paiement</label>
             </div>
-            <div class="col form-floating">
+            <div t-if="hasSelectedPartner" class="col form-floating">
                 <select class="form-select" id="pos-partner-account-type" t-model="state.partner_type" t-att-disabled="!hasSelectedPartner">
+                    <option value="">Aucun compte — lettrage manuel ultérieur</option>
                     <option value="customer">Compte client</option>
                     <option value="supplier">Compte fournisseur</option>
                 </select>

@@ -165,7 +165,7 @@ patch(CashMovePopup.prototype, {
         // These fields only make sense for a partner accounting payment.
         // Reset them when no partner is selected, otherwise restore defaults.
         this.state.pos_payment_method_id = partnerId ? (this.partnerPaymentModes.items[0]?.id || "") : "";
-        this.state.partner_type = partnerId ? "customer" : "";
+        this.state.partner_type = "";
         this.partnerDirectory.open = false;
     },
     async confirm() {
@@ -192,7 +192,8 @@ patch(CashMovePopup.prototype, {
                 {}, true
             );
             this.props.close();
-            this.dialog.add(ConfirmationDialog, {
+            if (!receipt.manual_reconciliation) {
+                this.dialog.add(ConfirmationDialog, {
                 title: _t("Imprimer le reçu de paiement ?"),
                 body: _t("Voulez-vous imprimer le reçu de paiement maintenant ?"),
                 confirmLabel: _t("Imprimer"),
@@ -202,8 +203,14 @@ patch(CashMovePopup.prototype, {
                 { ...receipt, cashier_name: this.pos.get_cashier()?.name || "" },
                     this.pos.getReceiptHeaderData()
                 ),
-            });
-            this.notification.add(_t("Paiement et lettrage enregistrés."), { type: "success" });
+                });
+            }
+            this.notification.add(
+                receipt.manual_reconciliation
+                    ? _t("Paiement en attente de lettrage manuel.")
+                    : _t("Paiement et lettrage enregistrés."),
+                { type: "success" }
+            );
         } catch (error) {
             this.notification.add(error.message || _t("Le paiement client n'a pas pu être enregistré."), { type: "danger" });
             throw error;

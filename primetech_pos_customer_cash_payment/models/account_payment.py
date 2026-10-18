@@ -13,6 +13,11 @@ class AccountPayment(models.Model):
         copy=False,
         readonly=True,
     )
+    pos_manual_reconciliation = fields.Boolean(
+        string="Lettrage manuel depuis le POS",
+        copy=False,
+        readonly=True,
+    )
     pos_balance_before = fields.Monetary(
         string="Solde avant paiement", currency_field="currency_id", copy=False, readonly=True
     )
