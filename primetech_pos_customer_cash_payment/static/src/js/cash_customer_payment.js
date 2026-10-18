@@ -105,20 +105,30 @@ patch(CashMovePopup.prototype, {
         this.state.pos_payment_method_id = "";
         this.state.partner_type = "customer";
         this.partnerPaymentModes = useState({ items: [], loading: true });
+        this.partnerDirectory = useState({ items: [], loading: true, search: "" });
         this.partnerPaymentOrm = useService("orm");
         onWillStart(async () => {
-            const items = await this.partnerPaymentOrm.call(
-                "pos.session", "pos_customer_payment_methods", [this.pos.session.id]
-            );
+            const [items, partners] = await Promise.all([
+                this.partnerPaymentOrm.call("pos.session", "pos_customer_payment_methods", [this.pos.session.id]),
+                this.partnerPaymentOrm.call("pos.session", "pos_customer_payment_partners", [this.pos.session.id]),
+            ]);
             this.partnerPaymentModes.items = items;
             this.partnerPaymentModes.loading = false;
             this.state.pos_payment_method_id = items[0]?.id || "";
+            this.partnerDirectory.items = partners;
+            this.partnerDirectory.loading = false;
         });
     },
-    get customerPartners() {
-        return (this.pos.models["res.partner"]?.getAll?.() || [])
-            .filter((partner) => !partner.company_id || partner.company_id === this.pos.company.id)
-            .sort((a, b) => (a.display_name || a.name).localeCompare(b.display_name || b.name));
+    get filteredCustomerPartners() {
+        const query = this.partnerDirectory.search.trim().toLocaleLowerCase();
+        if (!query) return this.partnerDirectory.items;
+        return this.partnerDirectory.items.filter((partner) =>
+            [partner.display_name, partner.name, partner.phone, partner.mobile, partner.email, partner.ref]
+                .filter(Boolean)
+                .join(" ")
+                .toLocaleLowerCase()
+                .includes(query)
+        );
     },
     async confirm() {
         const partnerId = Number(this.state.partner_id);

@@ -3,14 +3,19 @@
     <t t-inherit="point_of_sale.CashMovePopup" t-inherit-mode="extension" owl="1">
         <t position="before">
         <div class="row g-2 mb-2">
-            <div class="col form-floating">
-                <select class="form-select" id="pos-customer-cash-partner" t-model="state.partner_id">
-                    <option value="">Mouvement de caisse sans client</option>
-                    <t t-foreach="customerPartners" t-as="partner" t-key="partner.id">
+            <div class="col pos-customer-cash-partner-selector">
+                <label for="pos-customer-cash-partner-search" class="form-label">Partenaire (crée un paiement comptable)</label>
+                <div class="input-group input-group-sm mb-1">
+                    <span class="input-group-text"><i class="fa fa-search"/></span>
+                    <input class="form-control" id="pos-customer-cash-partner-search" type="search" placeholder="Rechercher : nom, téléphone, e-mail…" t-model="partnerDirectory.search" t-att-disabled="partnerDirectory.loading"/>
+                </div>
+                <select class="form-select" id="pos-customer-cash-partner" t-model="state.partner_id" t-att-disabled="partnerDirectory.loading">
+                    <option value=""><t t-esc="partnerDirectory.loading ? 'Chargement des contacts…' : 'Mouvement de caisse sans partenaire'"/></option>
+                    <t t-foreach="filteredCustomerPartners" t-as="partner" t-key="partner.id">
                         <option t-att-value="partner.id"><t t-esc="partner.display_name || partner.name"/></option>
                     </t>
                 </select>
-                <label for="pos-customer-cash-partner">Partenaire (crée un paiement comptable)</label>
+                <small class="text-muted"><t t-esc="filteredCustomerPartners.length"/> contact(s) affiché(s)</small>
             </div>
             <div class="col form-floating">
                 <select class="form-select" id="pos-partner-payment-method" t-model="state.pos_payment_method_id" t-att-disabled="partnerPaymentModes.loading">

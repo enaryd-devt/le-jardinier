@@ -72,6 +72,19 @@ class PosSession(models.Model):
         return [{"id": method.id, "name": method.name} for method in session.config_id.payment_method_ids.filtered("journal_id")]
 
     @api.model
+    def pos_customer_payment_partners(self, session_id):
+        """Load every active contact available to the POS user.
+
+        The regular POS partner cache can be limited.  Partner cash payments
+        need a complete directory so a cashier can locate any contact.
+        """
+        session = self.browse(session_id).exists()
+        if not session:
+            return []
+        partners = self.env["res.partner"].search([("active", "=", True)], order="display_name, id")
+        return partners.read(["display_name", "name", "phone", "mobile", "email", "ref"])
+
+    @api.model
     def create_customer_cash_payment(self, session_id, partner_id, payment_type, amount, reason="", pos_payment_method_id=False, partner_type=False):
         session = self.browse(session_id).exists()
         if not session or session.state not in ("opened", "opening_control"):

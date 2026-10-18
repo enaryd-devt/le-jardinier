@@ -9,6 +9,14 @@
     &__footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 32px; background: #fff; border-top: 1px solid #e5eaf0; }
 }
 
+.pos-customer-cash-partner-selector {
+    min-width: 0;
+    .form-label { display: block; margin: 0 0 4px 2px; color: #52657d; font-size: 11px; font-weight: 600; }
+    .input-group-text { color: #6f86a5; background: #f6f9fd; }
+    .form-control, .form-select { font-size: 12px; }
+    small { display: block; margin: 3px 0 0 2px; font-size: 10px; }
+}
+
 .customer-cash-payments {
     width: calc(100% - 48px); max-width: 1120px; margin: 28px auto; color: #263346; border: 1px solid #e3e9f1; border-radius: 14px; background: #fff; box-shadow: 0 8px 26px rgba(40, 62, 91, .06); overflow: hidden;
     &__search { display: flex; align-items: center; gap: 8px; margin: 10px 14px 8px; padding: 0 9px; border: 1px solid #dce3ec; border-radius: 7px; background: #fff; }
