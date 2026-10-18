@@ -30,7 +30,7 @@
                 </div>
             </div>
             <div class="col form-floating">
-                <select class="form-select" id="pos-partner-payment-method" t-model="state.pos_payment_method_id" t-att-disabled="partnerPaymentModes.loading">
+                <select class="form-select" id="pos-partner-payment-method" t-model="state.pos_payment_method_id" t-att-disabled="partnerPaymentModes.loading || !hasSelectedPartner">
                     <option value="">Choisir un mode de paiement</option>
                     <t t-foreach="partnerPaymentModes.items" t-as="method" t-key="method.id">
                         <option t-att-value="method.id"><t t-esc="method.name"/></option>
@@ -39,7 +39,7 @@
                 <label for="pos-partner-payment-method">Mode de paiement</label>
             </div>
             <div class="col form-floating">
-                <select class="form-select" id="pos-partner-account-type" t-model="state.partner_type">
+                <select class="form-select" id="pos-partner-account-type" t-model="state.partner_type" t-att-disabled="!hasSelectedPartner">
                     <option value="customer">Compte client</option>
                     <option value="supplier">Compte fournisseur</option>
                 </select>
