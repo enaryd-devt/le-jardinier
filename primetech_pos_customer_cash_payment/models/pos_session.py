@@ -81,7 +81,9 @@ class PosSession(models.Model):
         session = self.browse(session_id).exists()
         if not session:
             return []
-        partners = self.env["res.partner"].search([("active", "=", True)], order="display_name, id")
+        # display_name is computed/non-stored in Odoo 18 and cannot be used
+        # in a SQL ORDER BY.
+        partners = self.env["res.partner"].search([("active", "=", True)], order="name, id")
         return partners.read(["display_name", "name", "phone", "mobile", "email", "ref"])
 
     @api.model
