@@ -1,7 +1,7 @@
 {
     "name": "PrimeTech - Paiements clients POS",
     "summary": "Paiements clients en espèces et reçus depuis le point de vente",
-    "version": "18.0.1.0.25",
+    "version": "18.0.1.0.27",
     "category": "Point of Sale",
     "author": "PrimeTech Services",
     "license": "LGPL-3",

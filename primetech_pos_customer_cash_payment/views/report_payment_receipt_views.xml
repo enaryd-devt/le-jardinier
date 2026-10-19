@@ -20,4 +20,7 @@
             <t t-name="primetech_pos_customer_cash_payment.payment_receipt_balance_disabled"/>
         </field>
     </record>
+    <function model="ir.ui.view" name="primetech_update_payment_receipt_template">
+        <value eval="[]"/>
+    </function>
 </odoo>

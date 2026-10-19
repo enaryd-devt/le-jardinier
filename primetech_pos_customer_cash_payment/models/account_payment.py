@@ -73,6 +73,15 @@ class AccountPayment(models.Model):
         copy=False,
         readonly=True,
     )
+    receipt_balance_snapshot_before = fields.Monetary(
+        string="Receipt balance before", currency_field="currency_id", copy=False, readonly=True
+    )
+    receipt_balance_snapshot_after = fields.Monetary(
+        string="Receipt balance at date", currency_field="currency_id", copy=False, readonly=True
+    )
+    receipt_balance_snapshot_before_label = fields.Char(copy=False, readonly=True)
+    receipt_balance_snapshot_after_label = fields.Char(copy=False, readonly=True)
+    receipt_balance_snapshot_date = fields.Datetime(copy=False, readonly=True)
 
     def _pos_balance_direction_label(self, direction):
         """Return the receipt wording of an unsigned accounting balance."""
@@ -90,6 +99,13 @@ class AccountPayment(models.Model):
         self.ensure_one()
         if not self.partner_id or self.partner_type not in ("customer", "supplier"):
             return {"before_amount": 0.0, "after_amount": 0.0, "before_label": "", "after_label": ""}
+        if self.receipt_balance_snapshot_date and not self.env.context.get("partner_balance_receipt"):
+            return {
+                "before_amount": self.receipt_balance_snapshot_before,
+                "after_amount": self.receipt_balance_snapshot_after,
+                "before_label": self.receipt_balance_snapshot_before_label,
+                "after_label": self.receipt_balance_snapshot_after_label,
+            }
         lines = self.env["account.move.line"].search([
             ("partner_id", "child_of", self.partner_id.commercial_partner_id.id),
             ("company_id", "=", self.company_id.id),
@@ -109,9 +125,20 @@ class AccountPayment(models.Model):
                 return _("Solde réglé")
             return _("Le partenaire nous doit") if value > 0 else _("Nous devons au partenaire")
 
-        return {
+        values = {
             "before_amount": abs(before_signed),
             "after_amount": abs(after_signed),
             "before_label": label(before_signed),
             "after_label": label(after_signed),
         }
+        # A receipt is legal evidence: retain the balance shown at its first
+        # printing date instead of recalculating it on later reprints.
+        if self.id and not self.env.context.get("partner_balance_receipt"):
+            self.sudo().write({
+                "receipt_balance_snapshot_before": values["before_amount"],
+                "receipt_balance_snapshot_after": values["after_amount"],
+                "receipt_balance_snapshot_before_label": values["before_label"],
+                "receipt_balance_snapshot_after_label": values["after_label"],
+                "receipt_balance_snapshot_date": fields.Datetime.now(),
+            })
+        return values
