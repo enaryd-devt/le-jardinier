@@ -5,14 +5,12 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
-            <group>
-                <group>
-                    <field name="credit"/>
+            <xpath expr="//group[@name='container_row_2']" position="inside">
+                <group name="container_row_partner_balance" string="Solde partenaire">
+                    <field name="partner_balance_direction" readonly="1"/>
+                    <field name="partner_balance_amount" readonly="1"/>
                 </group>
-                <group>
-                    <field name="debit"/>
-                </group>
-            </group>
+            </xpath>
             <xpath expr="//group[@name='container_row_2']" position="inside">
                 <group name="container_row_credit">
                     <group colspan="2" string="Credit Limit">

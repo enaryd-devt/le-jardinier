@@ -11,6 +11,43 @@ class ResPartner(models.Model):
     credit_warning = fields.Monetary('Warning Amount')
     credit_blocking = fields.Monetary('Blocking Amount')
     amount_due = fields.Monetary('Due Amount', compute='_compute_amount_due')
+    partner_balance_amount = fields.Monetary(
+        string='Solde', compute='_compute_partner_balance'
+    )
+    partner_balance_direction = fields.Char(
+        string='Situation', compute='_compute_partner_balance'
+    )
+
+    def _get_partner_balance(self):
+        """Return the unsigned global balance and its direction.
+
+        The balance includes open receivable and payable entries for the
+        commercial partner and all of its contacts, as in the POS customer
+        cash payment module.
+        """
+        self.ensure_one()
+        commercial_partner = self.commercial_partner_id
+        lines = self.env['account.move.line'].search([
+            ('partner_id', 'child_of', commercial_partner.id),
+            ('company_id', '=', self.env.company.id),
+            ('parent_state', '=', 'posted'),
+            ('reconciled', '=', False),
+            ('account_id.account_type', 'in', ('asset_receivable', 'liability_payable')),
+        ])
+        signed_balance = sum(lines.mapped('amount_residual'))
+        if not signed_balance:
+            direction = _('Solde réglé')
+        elif signed_balance > 0:
+            direction = _('Le partenaire nous doit')
+        else:
+            direction = _('Nous devons au partenaire')
+        return abs(signed_balance), direction
+
+    def _compute_partner_balance(self):
+        for partner in self:
+            partner.partner_balance_amount, partner.partner_balance_direction = (
+                partner._get_partner_balance()
+            )
 
     @api.depends('credit', 'debit')
     def _compute_amount_due(self):
