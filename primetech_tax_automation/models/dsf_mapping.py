@@ -134,7 +134,7 @@ class PrimetechDsfMapping(models.Model):
     sheet_name = fields.Selection(selection="_selection_sheet_name", string="Feuille DSF", required=True)
     template_cell_id = fields.Many2one(
         "primetech.dsf.template.cell",
-        string="Cellule Excel",
+        string="Rubrique DSF",
         domain="[('sheet_name', '=', sheet_name), ('active', '=', True)]",
         ondelete="restrict",
     )

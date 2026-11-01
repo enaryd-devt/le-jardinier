@@ -114,8 +114,10 @@ class PrimetechDsfGenerationWizard(models.TransientModel):
             if mapping.sheet_name not in workbook.sheetnames:
                 raise UserError(_("La feuille DSF « %s » n'existe pas dans le modèle officiel.") % mapping.sheet_name)
             try:
-                workbook[mapping.sheet_name][mapping.cell_address].value = round(
-                    mapping._amount_for_period(date_from, date_to), 0
+                self._set_excel_value(
+                    workbook[mapping.sheet_name],
+                    mapping.cell_address,
+                    round(mapping._amount_for_period(date_from, date_to), 0),
                 )
             except ValueError:
                 raise UserError(_("Cellule Excel invalide : %s (%s).") % (mapping.cell_address, mapping.name))
