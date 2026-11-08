@@ -27,6 +27,71 @@
 .pt-tax-settlement-insights { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 10px; }.pt-tax-settlement-insights button { padding: 10px; border: 1px solid mix($o-brand-primary, $o-view-background-color, 14%); border-radius: $border-radius; color: var(--pt-tax-ink); background: $o-view-background-color; text-align: left; transition: background .18s ease, transform .18s ease; }.pt-tax-settlement-insights button:hover { background: rgba($o-brand-primary, .06); transform: translateY(-1px); }.pt-tax-settlement-insights span, .pt-tax-settlement-insights strong, .pt-tax-settlement-insights small { display: block; }.pt-tax-settlement-insights span, .pt-tax-settlement-insights small { color: $text-muted; font-size: 10px; }.pt-tax-settlement-insights strong { margin: 4px 0 2px; overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
 .pt-tax-deadlines { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; margin-top: 16px; }.pt-tax-deadlines button { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; border: 1px solid mix($o-brand-primary, $o-view-background-color, 14%); border-left: 3px solid var(--pt-tax-primary); border-radius: $border-radius; text-align: left; background: $o-view-background-color; transition: background .18s ease; }.pt-tax-deadlines button:hover { background: rgba($o-brand-primary, .06); }.pt-tax-deadlines button.is-late { border-left-color: darken($o-brand-primary, 12%); }.pt-tax-deadlines b, .pt-tax-deadlines small { display: block; }.pt-tax-deadlines b { font-size: 11px; }.pt-tax-deadlines small { margin-top: 3px; color: $text-muted; font-size: 10px; }.pt-tax-deadlines button > span:last-child { text-align: right; }
 .pt-tax-no-data { margin: 40px 0; color: $text-muted; text-align: center; font-size: 13px; }
+
+// Palette dédiée au tableau fiscal : chaque couleur distingue une information
+// sans modifier la hiérarchie fonctionnelle du tableau.
+.pt-tax-dashboard {
+    --pt-tax-blue: #2563eb;
+    --pt-tax-violet: #7c3aed;
+    --pt-tax-green: #059669;
+    --pt-tax-amber: #d97706;
+    --pt-tax-coral: #e11d48;
+    background:
+        radial-gradient(circle at 5% 0%, rgba(124, 58, 237, .10), transparent 26%),
+        radial-gradient(circle at 95% 10%, rgba(37, 99, 235, .11), transparent 30%),
+        mix($o-brand-primary, $o-view-background-color, 3%);
+
+    .pt-tax-hero {
+        padding: 22px 24px;
+        border: 0;
+        border-radius: $border-radius-lg;
+        color: #fff;
+        background: linear-gradient(115deg, #1d4ed8 0%, #4f46e5 52%, #7c3aed 100%);
+        box-shadow: 0 14px 30px rgba(79, 70, 229, .22);
+
+        .pt-tax-section-label, p { color: rgba(255, 255, 255, .78); opacity: 1; }
+        .pt-tax-period label { color: rgba(255, 255, 255, .92); }
+        .pt-tax-period input, .pt-tax-period select {
+            border-color: rgba(255, 255, 255, .35);
+            color: var(--pt-tax-ink);
+            background: rgba(255, 255, 255, .96);
+        }
+    }
+
+    .pt-tax-kpi { overflow: hidden; position: relative; border: 0; }
+    .pt-tax-kpi::before { position: absolute; top: 0; right: 0; left: 0; height: 4px; content: ""; background: var(--pt-tax-kpi-color, var(--pt-tax-blue)); }
+    .pt-tax-kpi > .fa { color: var(--pt-tax-kpi-color, var(--pt-tax-blue)); background: color-mix(in srgb, var(--pt-tax-kpi-color, var(--pt-tax-blue)) 13%, transparent); }
+    .pt-tax-kpi:nth-child(1) { --pt-tax-kpi-color: var(--pt-tax-blue); background: linear-gradient(135deg, #fff 55%, #eff6ff); }
+    .pt-tax-kpi:nth-child(2) { --pt-tax-kpi-color: var(--pt-tax-violet); background: linear-gradient(135deg, #fff 55%, #f5f3ff); }
+    .pt-tax-kpi:nth-child(3) { --pt-tax-kpi-color: var(--pt-tax-amber); background: linear-gradient(135deg, #fff 55%, #fffbeb); }
+    .pt-tax-kpi:nth-child(4) { --pt-tax-kpi-color: var(--pt-tax-green); background: linear-gradient(135deg, #fff 55%, #ecfdf5); }
+
+    .pt-tax-panel { border: 0; box-shadow: 0 10px 25px rgba(30, 41, 59, .08); }
+    .pt-tax-panel header .pt-tax-section-label { color: var(--pt-tax-blue); }
+    .pt-tax-analysis-grid .pt-tax-panel:nth-child(1) header .pt-tax-section-label { color: var(--pt-tax-violet); }
+    .pt-tax-analysis-grid .pt-tax-panel:nth-child(2) header .pt-tax-section-label { color: var(--pt-tax-amber); }
+
+    .pt-tax-statuses button:nth-child(1) { border-color: #bfdbfe; background: #eff6ff; }
+    .pt-tax-statuses button:nth-child(2) { border-color: #ddd6fe; background: #f5f3ff; }
+    .pt-tax-statuses button:nth-child(3) { border-color: #fde68a; background: #fffbeb; }
+    .pt-tax-statuses button:nth-child(4) { border-color: #a7f3d0; background: #ecfdf5; }
+    .pt-tax-statuses button:nth-child(5) { border-color: #fecdd3; background: #fff1f2; }
+
+    .pt-tax-score { background: radial-gradient(closest-side, $o-view-background-color 75%, transparent 76% 100%), conic-gradient(var(--pt-tax-violet) var(--pt-score), #ede9fe 0); }
+    .pt-tax-rate { color: #92400e; background: #fef3c7; }
+    .pt-tax-analysis-metrics > div:first-child { background: #eff6ff; }
+    .pt-tax-analysis-metrics > div:last-child { background: #f5f3ff; }
+    .pt-tax-section-item > i { background: #dbeafe; }
+    .pt-tax-section-item > i b { background: linear-gradient(90deg, var(--pt-tax-blue), var(--pt-tax-violet)); }
+    .pt-tax-bar-track { background: #dbeafe; }
+    .pt-tax-bar-track i { background: linear-gradient(180deg, #60a5fa, #2563eb); }
+    .pt-tax-flow > button:first-child { background: #ecfdf5; }
+    .pt-tax-flow > button:last-child { background: #fff1f2; }
+    .pt-tax-flow-icon { background: var(--pt-tax-green); }
+    .pt-tax-flow-icon.out { background: var(--pt-tax-coral); }
+    .pt-tax-deadlines button { border-left-color: var(--pt-tax-amber); background: #fffdf7; }
+    .pt-tax-deadlines button.is-late { border-left-color: var(--pt-tax-coral); background: #fff7f8; }
+}
 .pt-tax-detail-overlay { position: fixed; inset: 0; z-index: 1050; display: grid; place-items: center; padding: 24px; background: rgba($o-gray-900, .42); backdrop-filter: blur(3px); }.pt-tax-detail-modal { display: flex; width: 96vw; max-width: 980px; max-height: 90vh; flex-direction: column; overflow: hidden; border: 1px solid mix($o-brand-primary, $o-view-background-color, 18%); border-radius: $border-radius-lg; background: $o-view-background-color; box-shadow: 0 24px 70px rgba($o-gray-900, .28); animation: ptTaxRise .25s ease both; }.pt-tax-detail-modal > header, .pt-tax-detail-modal > footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid mix($o-brand-primary, $o-view-background-color, 14%); }.pt-tax-detail-modal > footer { justify-content: flex-end; border-top: 1px solid mix($o-brand-primary, $o-view-background-color, 14%); border-bottom: 0; }.pt-tax-detail-modal h2 { margin: 3px 0 0; font-size: 18px; }.pt-tax-detail-loading { display: grid; min-height: 240px; place-items: center; color: var(--pt-tax-primary); }.pt-tax-detail-summary { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; color: $text-muted; background: rgba($o-brand-primary, .05); }.pt-tax-detail-summary strong { color: var(--pt-tax-ink); }.pt-tax-detail-table-wrap { overflow: auto; }.pt-tax-detail-table-wrap table { margin: 0; }.pt-tax-detail-table-wrap thead { position: sticky; top: 0; z-index: 1; background: $o-view-background-color; }.pt-tax-detail-table-wrap tbody tr { cursor: pointer; }.pt-tax-source { display: inline-block; padding: 3px 7px; border-radius: 999px; color: var(--pt-tax-primary); background: rgba($o-brand-primary, .10); font-size: 10px; font-weight: 700; white-space: nowrap; }
 @media (max-width: 1100px) { .pt-tax-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }.pt-tax-analysis-grid, .pt-tax-grid { grid-template-columns: 1fr; }.pt-tax-flow-panel, .pt-tax-deadlines-panel { grid-column: auto; }.pt-tax-deadlines { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .pt-tax-dashboard { padding: 12px; }.pt-tax-hero { align-items: stretch; flex-direction: column; padding: 20px; border-radius: 15px; }.pt-tax-hero h1 { font-size: 23px; }.pt-tax-period { display: grid; grid-template-columns: 1fr 1fr; }.pt-tax-period label:first-child { grid-column: 1 / -1; }.pt-tax-period input, .pt-tax-period select { width: 100%; }.pt-tax-kpis { grid-template-columns: 1fr; gap: 9px; margin: 10px 0; }.pt-tax-kpi { padding: 14px; }.pt-tax-panel { padding: 15px; border-radius: 14px; }.pt-tax-statuses { grid-template-columns: repeat(3, minmax(0, 1fr)); }.pt-tax-deadlines { grid-template-columns: 1fr; }.pt-tax-chart { height: 175px; }.pt-tax-flow { gap: 7px; }.pt-tax-detail-overlay { padding: 8px; }.pt-tax-detail-modal { width: 100%; max-height: 94vh; }.pt-tax-detail-table-wrap table { min-width: 720px; }.pt-tax-payroll { align-items: flex-start; flex-wrap: wrap; }.pt-tax-payroll small { width: 100%; margin-left: 45px; } }
