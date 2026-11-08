@@ -19,6 +19,26 @@
         </field>
     </record>
 
+    <record id="view_tax_form_inherit_reconciliation_account" model="ir.ui.view">
+        <field name="name">account.tax.form.inherit.primetech.reconciliation.account</field>
+        <field name="model">account.tax</field>
+        <field name="inherit_id" ref="account.view_tax_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='invoice_repartition_line_ids']" position="before">
+                <separator string="Compte comptable de lettrage — Factures"/>
+                <div class="text-muted mb-2">
+                    Sur la ligne « Taxe », choisissez le compte comptable destiné aux écritures de taxe et au lettrage.
+                </div>
+            </xpath>
+            <xpath expr="//field[@name='refund_repartition_line_ids']" position="before">
+                <separator string="Compte comptable de lettrage — Avoirs"/>
+                <div class="text-muted mb-2">
+                    Sélectionnez le même compte sur la ligne « Taxe » pour permettre le lettrage des avoirs.
+                </div>
+            </xpath>
+        </field>
+    </record>
+
     <record id="act_tax_settings" model="ir.actions.act_window">
         <field name="name">Paramètres fiscaux</field>
         <field name="res_model">res.config.settings</field>
