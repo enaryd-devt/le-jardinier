@@ -1,0 +1,55 @@
+from odoo import fields, models
+
+
+class AccountMove(models.Model):
+    _inherit = "account.move"
+
+    pos_deposit_payment_ids = fields.Many2many(
+        "account.payment", "primetech_pos_deposit_invoice_rel",
+        "move_id", "payment_id",
+        string="Dépôts partenaires utilisés", copy=False, readonly=True,
+    )
+
+    def _apply_partner_deposits(self):
+        """Apply available POS partner deposits to newly posted customer invoices."""
+        Payment = self.env["account.payment"]
+        for move in self.filtered(lambda record: record.state == "posted" and record.move_type in ("out_invoice", "out_receipt") and record.partner_id):
+            partner = move.partner_id.commercial_partner_id
+            invoice_lines = move.line_ids.filtered(
+                lambda line: line.account_id.account_type == "asset_receivable"
+                and line.amount_residual > 0
+                and line.partner_id.commercial_partner_id == partner
+            )
+            for invoice_line in invoice_lines:
+                deposits = Payment.search([
+                    ("pos_customer_cash_payment", "=", True),
+                    ("pos_settlement_type", "=", "deposit"),
+                    ("partner_id", "=", partner.id),
+                    ("company_id", "=", move.company_id.id),
+                    ("state", "=", "posted"),
+                ], order="date, id")
+                deposit_lines = self.env["account.move.line"]
+                used_deposits = Payment
+                amount_left = invoice_line.amount_residual
+                for deposit in deposits:
+                    deposit_line = deposit.move_id.line_ids.filtered(
+                        lambda line: line.account_id == invoice_line.account_id
+                        and line.partner_id.commercial_partner_id == partner
+                        and line.amount_residual < 0
+                        and not line.reconciled
+                    )[:1]
+                    if not deposit_line:
+                        continue
+                    deposit_lines |= deposit_line
+                    used_deposits |= deposit
+                    amount_left -= abs(deposit_line.amount_residual)
+                    if amount_left <= 0:
+                        break
+                if deposit_lines:
+                    (invoice_line | deposit_lines).reconcile()
+                    move.pos_deposit_payment_ids = [(4, deposit.id) for deposit in used_deposits]
+
+    def action_post(self):
+        result = super().action_post()
+        self._apply_partner_deposits()
+        return result

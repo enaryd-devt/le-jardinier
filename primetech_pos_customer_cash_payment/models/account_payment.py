@@ -12,6 +12,40 @@ class AccountPayment(models.Model):
     pos_customer_cash_payment = fields.Boolean(
         string="Paiement client en espèces depuis le POS", copy=False, readonly=True
     )
+    pos_loan_repayment_ids = fields.Many2many(
+        "account.payment", "primetech_pos_loan_repayment_rel",
+        "loan_payment_id", "repayment_payment_id",
+        string="Remboursements du prêt", copy=False, readonly=True,
+    )
+    pos_loan_payment_ids = fields.Many2many(
+        "account.payment", "primetech_pos_loan_repayment_rel",
+        "repayment_payment_id", "loan_payment_id",
+        string="Prêts remboursés", copy=False, readonly=True,
+    )
+    pos_credit_invoice_ids = fields.Many2many(
+        "account.move", "primetech_pos_credit_payment_invoice_rel",
+        "payment_id", "move_id", string="Factures à crédit réglées",
+        copy=False, readonly=True,
+    )
+    pos_settlement_type = fields.Selection(
+        [
+            ("loan", "Prêt partenaire"),
+            ("loan_repayment", "Remboursement prêt"),
+            ("credit_sale", "Règlement vente à crédit"),
+            ("deposit", "Dépôt partenaire"),
+            ("deposit_withdrawal", "Retrait de dépôt"),
+        ], string="Nature du paiement POS", copy=False, readonly=True,
+    )
+    pos_deposit_use_ids = fields.Many2many(
+        "account.payment", "primetech_pos_deposit_use_rel",
+        "deposit_payment_id", "use_payment_id",
+        string="Utilisations du dépôt", copy=False, readonly=True,
+    )
+    pos_deposit_payment_ids = fields.Many2many(
+        "account.payment", "primetech_pos_deposit_use_rel",
+        "use_payment_id", "deposit_payment_id",
+        string="Dépôts utilisés", copy=False, readonly=True,
+    )
     pos_balance_before = fields.Monetary(
         string="Solde avant paiement", currency_field="currency_id", copy=False, readonly=True
     )

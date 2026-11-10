@@ -46,6 +46,120 @@ class PosSession(models.Model):
         if partner_lines:
             partner_lines.write({"name": label})
 
+    def _reconcile_pos_loan_repayment(self, payment):
+        """Link an incoming partner payment to the customer's open POS loans."""
+        self.ensure_one()
+        if payment.payment_type != "inbound" or not payment.partner_id:
+            return
+        partner = payment.partner_id.commercial_partner_id
+        repayment_line = payment.move_id.line_ids.filtered(
+            lambda line: line.account_id.account_type == "asset_receivable"
+            and line.partner_id.commercial_partner_id == partner
+            and line.amount_residual < 0
+        )[:1]
+        if not repayment_line:
+            return
+        loans = self.env["account.payment"].search([
+            ("pos_customer_cash_payment", "=", True),
+            ("payment_type", "=", "outbound"),
+            ("partner_type", "=", "customer"),
+            ("partner_id", "=", partner.id),
+            ("company_id", "=", payment.company_id.id),
+            ("state", "=", "posted"),
+        ], order="date, id")
+        loan_lines = self.env["account.move.line"]
+        linked_loans = self.env["account.payment"]
+        amount_left = abs(repayment_line.amount_residual)
+        for loan in loans:
+            loan_line = loan.move_id.line_ids.filtered(
+                lambda line: line.account_id == repayment_line.account_id
+                and line.partner_id.commercial_partner_id == partner
+                and line.amount_residual > 0
+                and not line.reconciled
+            )[:1]
+            if not loan_line:
+                continue
+            loan_lines |= loan_line
+            linked_loans |= loan
+            amount_left -= loan_line.amount_residual
+            if amount_left <= 0:
+                break
+        if loan_lines:
+            (repayment_line | loan_lines).reconcile()
+            payment.pos_loan_payment_ids = [(4, loan.id) for loan in linked_loans]
+
+    def _reconcile_pos_credit_sale_payment(self, payment):
+        """Reconcile an incoming cash payment with open customer invoices."""
+        self.ensure_one()
+        partner = payment.partner_id.commercial_partner_id
+        payment_line = payment.move_id.line_ids.filtered(
+            lambda line: line.account_id.account_type == "asset_receivable"
+            and line.partner_id.commercial_partner_id == partner
+            and line.amount_residual < 0
+        )[:1]
+        if not payment_line:
+            return
+        invoice_lines = self.env["account.move.line"].search([
+            ("partner_id", "child_of", partner.id),
+            ("company_id", "=", payment.company_id.id),
+            ("parent_state", "=", "posted"),
+            ("account_id", "=", payment_line.account_id.id),
+            ("account_id.account_type", "=", "asset_receivable"),
+            ("move_id.move_type", "in", ("out_invoice", "out_receipt")),
+            ("amount_residual", ">", 0),
+        ], order="date_maturity, date, id")
+        selected_lines = self.env["account.move.line"]
+        selected_invoices = self.env["account.move"]
+        amount_left = abs(payment_line.amount_residual)
+        for line in invoice_lines:
+            selected_lines |= line
+            selected_invoices |= line.move_id
+            amount_left -= line.amount_residual
+            if amount_left <= 0:
+                break
+        if selected_lines:
+            (payment_line | selected_lines).reconcile()
+            payment.pos_credit_invoice_ids = [(4, invoice.id) for invoice in selected_invoices]
+
+    def _reconcile_pos_deposit_withdrawal(self, payment):
+        """Use the partner's available deposits when cash is withdrawn."""
+        self.ensure_one()
+        partner = payment.partner_id.commercial_partner_id
+        withdrawal_line = payment.move_id.line_ids.filtered(
+            lambda line: line.account_id.account_type == "asset_receivable"
+            and line.partner_id.commercial_partner_id == partner
+            and line.amount_residual > 0
+        )[:1]
+        if not withdrawal_line:
+            return
+        deposits = self.env["account.payment"].search([
+            ("pos_customer_cash_payment", "=", True),
+            ("pos_settlement_type", "=", "deposit"),
+            ("partner_id", "=", partner.id),
+            ("company_id", "=", payment.company_id.id),
+            ("state", "=", "posted"),
+        ], order="date, id")
+        deposit_lines = self.env["account.move.line"]
+        linked_deposits = self.env["account.payment"]
+        amount_left = withdrawal_line.amount_residual
+        for deposit in deposits:
+            deposit_line = deposit.move_id.line_ids.filtered(
+                lambda line: line.account_id == withdrawal_line.account_id
+                and line.partner_id.commercial_partner_id == partner
+                and line.amount_residual < 0
+                and not line.reconciled
+            )[:1]
+            if not deposit_line:
+                continue
+            deposit_lines |= deposit_line
+            linked_deposits |= deposit
+            amount_left -= abs(deposit_line.amount_residual)
+            if amount_left <= 0:
+                break
+        if deposit_lines:
+            (withdrawal_line | deposit_lines).reconcile()
+            payment.pos_deposit_payment_ids = [(4, deposit.id) for deposit in linked_deposits]
+
     @api.model
     def pos_customer_payment_partners(self, session_id, search_term="", offset=0, limit=100):
         """Search every active contact available to the POS user, by pages."""
@@ -85,12 +199,16 @@ class PosSession(models.Model):
         }
 
     @api.model
-    def create_customer_cash_payment(self, session_id, partner_id, payment_type, amount, reason=""):
+    def create_customer_cash_payment(self, session_id, partner_id, payment_type, amount, reason="", settlement_type="credit_sale"):
         session = self.browse(session_id).exists()
         if not session or session.state not in ("opened", "opening_control"):
             raise UserError(_("La session du point de vente n'est plus ouverte."))
         if payment_type not in ("inbound", "outbound") or amount <= 0:
             raise ValidationError(_("Le montant du paiement doit être supérieur à zéro."))
+        if payment_type == "inbound" and settlement_type not in ("credit_sale", "loan_repayment", "deposit"):
+            raise ValidationError(_("Choisissez le type de règlement entrant."))
+        if payment_type == "outbound" and settlement_type not in ("loan", "deposit_withdrawal"):
+            settlement_type = "loan"
         partner = self.env["res.partner"].browse(partner_id).exists()
         if not partner:
             raise ValidationError(_("Veuillez sélectionner un partenaire."))
@@ -111,7 +229,9 @@ class PosSession(models.Model):
         )
         payment = self.env["account.payment"].create({
             "payment_type": payment_type,
-            "partner_type": "customer" if payment_type == "inbound" else "supplier",
+            # Loans and repayments are both carried by the customer's
+            # receivable account so Odoo can reconcile them.
+            "partner_type": "customer",
             "partner_id": partner.commercial_partner_id.id,
             "amount": amount,
             "currency_id": session.currency_id.id,
@@ -123,6 +243,7 @@ class PosSession(models.Model):
             "memo": payment_label,
             "pos_session_id": session.id,
             "pos_customer_cash_payment": True,
+            "pos_settlement_type": settlement_type,
             "pos_balance_before": before,
             "pos_balance_before_direction": before_direction,
         })
@@ -131,6 +252,13 @@ class PosSession(models.Model):
             part for part in (session.name, payment.name, reason) if part
         )
         session._set_payment_label(payment, payment_label)
+        if payment_type == "inbound":
+            if settlement_type == "loan_repayment":
+                session._reconcile_pos_loan_repayment(payment)
+            elif settlement_type == "credit_sale":
+                session._reconcile_pos_credit_sale_payment(payment)
+        elif settlement_type == "deposit_withdrawal":
+            session._reconcile_pos_deposit_withdrawal(payment)
 
         # This line is deliberately retained for the cash journal: POS closing uses it to calculate the
         # physical cash expected in the drawer.  It clears the payment's suspense

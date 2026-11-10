@@ -189,6 +189,7 @@ patch(CashMovePopup.prototype, {
     setup() {
         super.setup(...arguments);
         this.state.partner_id = "";
+        this.state.settlement_type = "credit_sale";
         this.partnerDirectory = useState({ items: [], loading: false, search: "", open: false, offset: 0, hasMore: true });
         this.partnerSearchInput = useRef("partnerSearchInput");
         this.partnerPaymentOrm = useService("orm");
@@ -251,6 +252,8 @@ patch(CashMovePopup.prototype, {
     async confirm() {
         const partnerId = Number(this.state.partner_id);
         if (!partnerId) {
+            // Standard POS cash movements have no partner: they remain
+            // available for the accountant's later manual reconciliation.
             return super.confirm(...arguments);
         }
         const amount = Number.parseFloat(this.state.amount);
@@ -259,11 +262,15 @@ patch(CashMovePopup.prototype, {
             return;
         }
         const paymentType = this.state.type === "in" ? "inbound" : "outbound";
+        const settlementType = paymentType === "inbound"
+            ? (["credit_sale", "loan_repayment", "deposit"].includes(this.state.settlement_type)
+                ? this.state.settlement_type : "credit_sale")
+            : (this.state.settlement_type === "deposit_withdrawal" ? "deposit_withdrawal" : "loan");
         try {
             const receipt = await this.pos.data.call(
                 "pos.session",
                 "create_customer_cash_payment",
-                [[this.pos.session.id], partnerId, paymentType, amount, this.state.reason.trim()],
+                [[this.pos.session.id], partnerId, paymentType, amount, this.state.reason.trim(), settlementType],
                 {}, true
             );
             this.props.close();

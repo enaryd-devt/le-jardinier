@@ -33,6 +33,30 @@
         </t>
     </t>
 
+    <t t-inherit="point_of_sale.CashMovePopup" t-inherit-mode="extension" owl="1">
+        <xpath expr="//div[contains(@class, 'pos-customer-cash-partner-selector')]/.." position="after">
+            <div class="row g-2 mb-2" t-if="state.type === 'in' and hasSelectedPartner">
+                <div class="col">
+                    <label class="form-label">Nature de l'encaissement</label>
+                    <select class="form-select" t-model="state.settlement_type">
+                        <option value="credit_sale">Règlement facture</option>
+                        <option value="loan_repayment">Remboursement prêt</option>
+                        <option value="deposit">Dépôt dans le compte partenaire</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row g-2 mb-2" t-if="state.type !== 'in' and hasSelectedPartner">
+                <div class="col">
+                    <label class="form-label">Nature du décaissement</label>
+                    <select class="form-select" t-model="state.settlement_type">
+                        <option value="loan">Prêt partenaire</option>
+                        <option value="deposit_withdrawal">Retrait d'un dépôt</option>
+                    </select>
+                </div>
+            </div>
+        </xpath>
+    </t>
+
     <t t-inherit="point_of_sale.Navbar" t-inherit-mode="extension" owl="1">
         <DropdownItem t-if="showCashMoveButton" position="after">
             <DropdownItem onSelected="() => this.showCustomerCashPayments()">Paiements partenaires POS</DropdownItem>
