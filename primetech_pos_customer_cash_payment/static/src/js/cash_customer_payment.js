@@ -189,6 +189,7 @@ patch(CashMovePopup.prototype, {
     setup() {
         super.setup(...arguments);
         this.state.partner_id = "";
+        this.state.partner_type = "customer";
         this.state.settlement_type = "credit_sale";
         this.partnerDirectory = useState({ items: [], loading: false, search: "", open: false, offset: 0, hasMore: true });
         this.partnerSearchInput = useRef("partnerSearchInput");
@@ -214,7 +215,7 @@ patch(CashMovePopup.prototype, {
         try {
             const result = await this.partnerPaymentOrm.call(
                 "pos.session", "pos_customer_payment_partners",
-                [this.pos.session.id, this.partnerDirectory.search, this.partnerDirectory.offset, 100]
+                [this.pos.session.id, this.partnerDirectory.search, this.partnerDirectory.offset, 100, this.state.partner_type]
             );
             this.partnerDirectory.items.push(...result.partners);
             this.partnerDirectory.offset += result.partners.length;
@@ -249,6 +250,13 @@ patch(CashMovePopup.prototype, {
         this.state.partner_id = partnerId ? String(partnerId) : "";
         this.partnerDirectory.open = false;
     },
+    onPartnerTypeChange() {
+        this.state.partner_id = "";
+        this.partnerDirectory.items = [];
+        this.partnerDirectory.offset = 0;
+        this.partnerDirectory.hasMore = true;
+        this.state.settlement_type = this.state.partner_type === "supplier" ? "vendor_bill" : "credit_sale";
+    },
     async confirm() {
         const partnerId = Number(this.state.partner_id);
         if (!partnerId) {
@@ -262,15 +270,19 @@ patch(CashMovePopup.prototype, {
             return;
         }
         const paymentType = this.state.type === "in" ? "inbound" : "outbound";
-        const settlementType = paymentType === "inbound"
-            ? (["credit_sale", "loan_repayment", "deposit"].includes(this.state.settlement_type)
-                ? this.state.settlement_type : "credit_sale")
-            : (this.state.settlement_type === "deposit_withdrawal" ? "deposit_withdrawal" : "loan");
+        const supplier = this.state.partner_type === "supplier";
+        const settlementType = supplier
+            ? (paymentType === "inbound"
+                ? (["vendor_refund", "supplier_advance_refund"].includes(this.state.settlement_type) ? this.state.settlement_type : "vendor_refund")
+                : (["vendor_bill", "supplier_advance"].includes(this.state.settlement_type) ? this.state.settlement_type : "vendor_bill"))
+            : (paymentType === "inbound"
+                ? (["credit_sale", "loan_repayment", "deposit"].includes(this.state.settlement_type) ? this.state.settlement_type : "credit_sale")
+                : (this.state.settlement_type === "deposit_withdrawal" ? "deposit_withdrawal" : "loan"));
         try {
             const receipt = await this.pos.data.call(
                 "pos.session",
                 "create_customer_cash_payment",
-                [[this.pos.session.id], partnerId, paymentType, amount, this.state.reason.trim(), settlementType],
+                [[this.pos.session.id], partnerId, paymentType, amount, this.state.reason.trim(), settlementType, this.state.partner_type],
                 {}, true
             );
             this.props.close();

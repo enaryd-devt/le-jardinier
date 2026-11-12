@@ -121,6 +121,81 @@ class PosSession(models.Model):
             (payment_line | selected_lines).reconcile()
             payment.pos_credit_invoice_ids = [(4, invoice.id) for invoice in selected_invoices]
 
+    def _reconcile_pos_supplier_bill_payment(self, payment):
+        """Apply a POS cash disbursement to the supplier's open bills."""
+        self.ensure_one()
+        partner = payment.partner_id.commercial_partner_id
+        payment_line = payment.move_id.line_ids.filtered(lambda line: line.account_id.account_type == "liability_payable" and line.partner_id.commercial_partner_id == partner and line.amount_residual > 0)[:1]
+        if not payment_line:
+            return
+        bill_lines = self.env["account.move.line"].search([
+            ("partner_id", "child_of", partner.id), ("company_id", "=", payment.company_id.id),
+            ("parent_state", "=", "posted"), ("account_id", "=", payment_line.account_id.id),
+            ("move_id.move_type", "in", ("in_invoice", "in_receipt")), ("amount_residual", "<", 0),
+        ], order="date_maturity, date, id")
+        selected_lines = self.env["account.move.line"]
+        selected_bills = self.env["account.move"]
+        amount_left = payment_line.amount_residual
+        for line in bill_lines:
+            selected_lines |= line
+            selected_bills |= line.move_id
+            amount_left -= abs(line.amount_residual)
+            if amount_left <= 0:
+                break
+        if selected_lines:
+            (payment_line | selected_lines).reconcile()
+            payment.pos_supplier_bill_ids = [(4, bill.id) for bill in selected_bills]
+
+    def _reconcile_pos_supplier_refund(self, payment):
+        """Apply supplier cash refund to posted supplier credit notes."""
+        self.ensure_one()
+        partner = payment.partner_id.commercial_partner_id
+        payment_line = payment.move_id.line_ids.filtered(lambda line: line.account_id.account_type == "liability_payable" and line.partner_id.commercial_partner_id == partner and line.amount_residual < 0)[:1]
+        if not payment_line:
+            return
+        refund_lines = self.env["account.move.line"].search([
+            ("partner_id", "child_of", partner.id), ("company_id", "=", payment.company_id.id),
+            ("parent_state", "=", "posted"), ("account_id", "=", payment_line.account_id.id),
+            ("move_id.move_type", "=", "in_refund"), ("amount_residual", ">", 0),
+        ], order="date_maturity, date, id")
+        selected_lines = self.env["account.move.line"]
+        selected_bills = self.env["account.move"]
+        amount_left = abs(payment_line.amount_residual)
+        for line in refund_lines:
+            selected_lines |= line
+            selected_bills |= line.move_id
+            amount_left -= line.amount_residual
+            if amount_left <= 0:
+                break
+        if selected_lines:
+            (payment_line | selected_lines).reconcile()
+            payment.pos_supplier_bill_ids = [(4, bill.id) for bill in selected_bills]
+
+    def _reconcile_pos_supplier_advance_refund(self, payment):
+        """Reconcile returned supplier advance with the original advance."""
+        self.ensure_one()
+        partner = payment.partner_id.commercial_partner_id
+        refund_line = payment.move_id.line_ids.filtered(lambda line: line.account_id.account_type == "liability_payable" and line.partner_id.commercial_partner_id == partner and line.amount_residual < 0)[:1]
+        if not refund_line:
+            return
+        advances = self.env["account.payment"].search([
+            ("pos_customer_cash_payment", "=", True), ("pos_settlement_type", "=", "supplier_advance"),
+            ("partner_type", "=", "supplier"), ("partner_id", "=", partner.id),
+            ("company_id", "=", payment.company_id.id), ("state", "=", "posted"),
+        ], order="date, id")
+        advance_lines = self.env["account.move.line"]
+        amount_left = abs(refund_line.amount_residual)
+        for advance in advances:
+            advance_line = advance.move_id.line_ids.filtered(lambda line: line.account_id == refund_line.account_id and line.partner_id.commercial_partner_id == partner and line.amount_residual > 0 and not line.reconciled)[:1]
+            if not advance_line:
+                continue
+            advance_lines |= advance_line
+            amount_left -= advance_line.amount_residual
+            if amount_left <= 0:
+                break
+        if advance_lines:
+            (refund_line | advance_lines).reconcile()
+
     def _reconcile_pos_deposit_withdrawal(self, payment):
         """Use the partner's available deposits when cash is withdrawn."""
         self.ensure_one()
@@ -161,7 +236,7 @@ class PosSession(models.Model):
             payment.pos_deposit_payment_ids = [(4, deposit.id) for deposit in linked_deposits]
 
     @api.model
-    def pos_customer_payment_partners(self, session_id, search_term="", offset=0, limit=100):
+    def pos_customer_payment_partners(self, session_id, search_term="", offset=0, limit=100, partner_type=False):
         """Search every active contact available to the POS user, by pages."""
         session = self.browse(session_id).exists()
         if not session:
@@ -169,6 +244,10 @@ class PosSession(models.Model):
         # display_name is computed/non-stored in Odoo 18 and cannot be used
         # in a SQL ORDER BY.
         domain = [("active", "=", True)]
+        if partner_type == "customer":
+            domain.append(("customer_rank", ">", 0))
+        elif partner_type == "supplier":
+            domain.append(("supplier_rank", ">", 0))
         if search_term:
             domain += ["|", "|", "|", "|", ("name", "ilike", search_term), ("phone", "ilike", search_term), ("mobile", "ilike", search_term), ("email", "ilike", search_term), ("ref", "ilike", search_term)]
         partners = self.env["res.partner"].search(domain, order="name, id", offset=offset, limit=limit + 1)
@@ -199,16 +278,28 @@ class PosSession(models.Model):
         }
 
     @api.model
-    def create_customer_cash_payment(self, session_id, partner_id, payment_type, amount, reason="", settlement_type="credit_sale"):
+    def create_customer_cash_payment(self, session_id, partner_id, payment_type, amount, reason="", settlement_type="credit_sale", partner_type="customer"):
         session = self.browse(session_id).exists()
         if not session or session.state not in ("opened", "opening_control"):
             raise UserError(_("La session du point de vente n'est plus ouverte."))
         if payment_type not in ("inbound", "outbound") or amount <= 0:
             raise ValidationError(_("Le montant du paiement doit être supérieur à zéro."))
-        if payment_type == "inbound" and settlement_type not in ("credit_sale", "loan_repayment", "deposit"):
+        if partner_type == "customer" and payment_type == "inbound" and settlement_type not in ("credit_sale", "loan_repayment", "deposit"):
             raise ValidationError(_("Choisissez le type de règlement entrant."))
-        if payment_type == "outbound" and settlement_type not in ("loan", "deposit_withdrawal"):
+        if partner_type == "customer" and payment_type == "outbound" and settlement_type not in ("loan", "deposit_withdrawal"):
             settlement_type = "loan"
+        allowed_settlements = {
+            "customer": {
+                "inbound": ("credit_sale", "loan_repayment", "deposit"),
+                "outbound": ("loan", "deposit_withdrawal"),
+            },
+            "supplier": {
+                "inbound": ("vendor_refund", "supplier_advance_refund"),
+                "outbound": ("vendor_bill", "supplier_advance"),
+            },
+        }
+        if partner_type not in allowed_settlements or settlement_type not in allowed_settlements[partner_type][payment_type]:
+            raise ValidationError(_("Invalid partner payment type."))
         partner = self.env["res.partner"].browse(partner_id).exists()
         if not partner:
             raise ValidationError(_("Veuillez sélectionner un partenaire."))
@@ -231,7 +322,7 @@ class PosSession(models.Model):
             "payment_type": payment_type,
             # Loans and repayments are both carried by the customer's
             # receivable account so Odoo can reconcile them.
-            "partner_type": "customer",
+            "partner_type": partner_type,
             "partner_id": partner.commercial_partner_id.id,
             "amount": amount,
             "currency_id": session.currency_id.id,
@@ -252,13 +343,19 @@ class PosSession(models.Model):
             part for part in (session.name, payment.name, reason) if part
         )
         session._set_payment_label(payment, payment_label)
-        if payment_type == "inbound":
+        if partner_type == "customer" and payment_type == "inbound":
             if settlement_type == "loan_repayment":
                 session._reconcile_pos_loan_repayment(payment)
             elif settlement_type == "credit_sale":
                 session._reconcile_pos_credit_sale_payment(payment)
-        elif settlement_type == "deposit_withdrawal":
+        elif partner_type == "customer" and settlement_type == "deposit_withdrawal":
             session._reconcile_pos_deposit_withdrawal(payment)
+        elif partner_type == "supplier" and settlement_type == "vendor_bill":
+            session._reconcile_pos_supplier_bill_payment(payment)
+        elif partner_type == "supplier" and settlement_type == "vendor_refund":
+            session._reconcile_pos_supplier_refund(payment)
+        elif partner_type == "supplier" and settlement_type == "supplier_advance_refund":
+            session._reconcile_pos_supplier_advance_refund(payment)
 
         # This line is deliberately retained for the cash journal: POS closing uses it to calculate the
         # physical cash expected in the drawer.  It clears the payment's suspense

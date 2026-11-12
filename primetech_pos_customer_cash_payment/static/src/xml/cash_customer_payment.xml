@@ -3,6 +3,13 @@
     <t t-inherit="point_of_sale.CashMovePopup" t-inherit-mode="extension" owl="1">
         <t position="before">
         <div class="row g-2 mb-2">
+            <div class="col-md-4">
+                <label class="form-label">Type de partenaire</label>
+                <select class="form-select" t-model="state.partner_type" t-on-change="onPartnerTypeChange">
+                    <option value="customer">Client</option>
+                    <option value="supplier">Fournisseur</option>
+                </select>
+            </div>
             <div class="col form-floating pos-customer-cash-partner-selector">
                 <label class="form-label">Partenaire (cr&#233;e un paiement comptable)</label>
                 <button type="button" class="form-select pos-customer-cash-partner-selector__trigger" t-on-click="togglePartnerPicker">
@@ -35,7 +42,7 @@
 
     <t t-inherit="point_of_sale.CashMovePopup" t-inherit-mode="extension" owl="1">
         <xpath expr="//div[contains(@class, 'pos-customer-cash-partner-selector')]/.." position="after">
-            <div class="row g-2 mb-2" t-if="state.type === 'in' and hasSelectedPartner">
+            <div class="row g-2 mb-2" t-if="state.type === 'in' and hasSelectedPartner and state.partner_type === 'customer'">
                 <div class="col">
                     <label class="form-label">Nature de l'encaissement</label>
                     <select class="form-select" t-model="state.settlement_type">
@@ -45,7 +52,7 @@
                     </select>
                 </div>
             </div>
-            <div class="row g-2 mb-2" t-if="state.type !== 'in' and hasSelectedPartner">
+            <div class="row g-2 mb-2" t-if="state.type !== 'in' and hasSelectedPartner and state.partner_type === 'customer'">
                 <div class="col">
                     <label class="form-label">Nature du décaissement</label>
                     <select class="form-select" t-model="state.settlement_type">
@@ -53,6 +60,12 @@
                         <option value="deposit_withdrawal">Retrait d'un dépôt</option>
                     </select>
                 </div>
+            </div>
+            <div class="row g-2 mb-2" t-if="state.type === 'in' and hasSelectedPartner and state.partner_type === 'supplier'">
+                <div class="col"><label class="form-label">Encaissement fournisseur</label><select class="form-select" t-model="state.settlement_type"><option value="vendor_refund">Remboursement fournisseur</option><option value="supplier_advance_refund">Retour d'avance fournisseur</option></select></div>
+            </div>
+            <div class="row g-2 mb-2" t-if="state.type !== 'in' and hasSelectedPartner and state.partner_type === 'supplier'">
+                <div class="col"><label class="form-label">Décaissement fournisseur</label><select class="form-select" t-model="state.settlement_type"><option value="vendor_bill">Règlement facture fournisseur</option><option value="supplier_advance">Avance fournisseur</option></select></div>
             </div>
         </xpath>
     </t>

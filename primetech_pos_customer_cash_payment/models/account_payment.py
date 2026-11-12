@@ -34,6 +34,10 @@ class AccountPayment(models.Model):
             ("credit_sale", "Règlement vente à crédit"),
             ("deposit", "Dépôt partenaire"),
             ("deposit_withdrawal", "Retrait de dépôt"),
+            ("vendor_bill", "Règlement facture fournisseur"),
+            ("supplier_advance", "Avance fournisseur"),
+            ("vendor_refund", "Remboursement fournisseur"),
+            ("supplier_advance_refund", "Retour avance fournisseur"),
         ], string="Nature du paiement POS", copy=False, readonly=True,
     )
     pos_deposit_use_ids = fields.Many2many(
@@ -45,6 +49,11 @@ class AccountPayment(models.Model):
         "account.payment", "primetech_pos_deposit_use_rel",
         "use_payment_id", "deposit_payment_id",
         string="Dépôts utilisés", copy=False, readonly=True,
+    )
+    pos_supplier_bill_ids = fields.Many2many(
+        "account.move", "primetech_pos_supplier_payment_bill_rel",
+        "payment_id", "move_id", string="Supplier bills settled",
+        copy=False, readonly=True,
     )
     pos_balance_before = fields.Monetary(
         string="Solde avant paiement", currency_field="currency_id", copy=False, readonly=True
