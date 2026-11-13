@@ -1,4 +1,5 @@
 from odoo import _, api, fields, models
+from odoo.tools import float_compare
 from odoo.exceptions import UserError, ValidationError
 
 
@@ -62,10 +63,11 @@ class PosSession(models.Model):
         loans = self.env["account.payment"].search([
             ("pos_customer_cash_payment", "=", True),
             ("payment_type", "=", "outbound"),
+            ("pos_settlement_type", "=", "loan"),
             ("partner_type", "=", "customer"),
             ("partner_id", "=", partner.id),
             ("company_id", "=", payment.company_id.id),
-            ("state", "=", "posted"),
+            ("state", "in", ("posted", "paid")),
         ], order="date, id")
         loan_lines = self.env["account.move.line"]
         linked_loans = self.env["account.payment"]
@@ -87,6 +89,30 @@ class PosSession(models.Model):
         if loan_lines:
             (repayment_line | loan_lines).reconcile()
             payment.pos_loan_payment_ids = [(4, loan.id) for loan in linked_loans]
+
+    def _pos_open_loan_amount(self, partner):
+        """Return the unreconciled amount of POS loans granted to a customer."""
+        self.ensure_one()
+        commercial_partner = partner.commercial_partner_id
+        loans = self.env["account.payment"].search([
+            ("pos_customer_cash_payment", "=", True),
+            ("payment_type", "=", "outbound"),
+            ("pos_settlement_type", "=", "loan"),
+            ("partner_type", "=", "customer"),
+            ("partner_id", "=", commercial_partner.id),
+            ("company_id", "=", self.company_id.id),
+            ("state", "in", ("posted", "paid")),
+        ])
+        amount = 0.0
+        for loan in loans:
+            line = loan.move_id.line_ids.filtered(
+                lambda item: item.account_id.account_type == "asset_receivable"
+                and item.partner_id.commercial_partner_id == commercial_partner
+                and item.amount_residual > 0
+                and not item.reconciled
+            )[:1]
+            amount += line.amount_residual
+        return amount
 
     def _reconcile_pos_credit_sale_payment(self, payment):
         """Reconcile an incoming cash payment with open customer invoices."""
@@ -181,7 +207,7 @@ class PosSession(models.Model):
         advances = self.env["account.payment"].search([
             ("pos_customer_cash_payment", "=", True), ("pos_settlement_type", "=", "supplier_advance"),
             ("partner_type", "=", "supplier"), ("partner_id", "=", partner.id),
-            ("company_id", "=", payment.company_id.id), ("state", "=", "posted"),
+            ("company_id", "=", payment.company_id.id), ("state", "in", ("posted", "paid")),
         ], order="date, id")
         advance_lines = self.env["account.move.line"]
         amount_left = abs(refund_line.amount_residual)
@@ -195,6 +221,29 @@ class PosSession(models.Model):
                 break
         if advance_lines:
             (refund_line | advance_lines).reconcile()
+
+    def _pos_available_deposit_amount(self, partner):
+        """Return only the POS deposits still available for a customer."""
+        self.ensure_one()
+        commercial_partner = partner.commercial_partner_id
+        deposits = self.env["account.payment"].search([
+            ("pos_customer_cash_payment", "=", True),
+            ("pos_settlement_type", "=", "deposit"),
+            ("partner_type", "=", "customer"),
+            ("partner_id", "=", commercial_partner.id),
+            ("company_id", "=", self.company_id.id),
+            ("state", "in", ("posted", "paid")),
+        ])
+        amount = 0.0
+        for deposit in deposits:
+            line = deposit.move_id.line_ids.filtered(
+                lambda item: item.account_id.account_type == "asset_receivable"
+                and item.partner_id.commercial_partner_id == commercial_partner
+                and item.amount_residual < 0
+                and not item.reconciled
+            )[:1]
+            amount += abs(line.amount_residual)
+        return amount
 
     def _reconcile_pos_deposit_withdrawal(self, payment):
         """Use the partner's available deposits when cash is withdrawn."""
@@ -212,7 +261,7 @@ class PosSession(models.Model):
             ("pos_settlement_type", "=", "deposit"),
             ("partner_id", "=", partner.id),
             ("company_id", "=", payment.company_id.id),
-            ("state", "=", "posted"),
+            ("state", "in", ("posted", "paid")),
         ], order="date, id")
         deposit_lines = self.env["account.move.line"]
         linked_deposits = self.env["account.payment"]
@@ -278,19 +327,39 @@ class PosSession(models.Model):
         }
 
     @api.model
+    def pos_loan_repayment_preview(self, session_id, partner_id, amount):
+        """Prepare a transparent repayment/deposit split for the POS popup."""
+        session = self.browse(session_id).exists()
+        partner = self.env["res.partner"].browse(partner_id).exists()
+        amount = float(amount or 0.0)
+        if not session or not partner or amount <= 0:
+            raise ValidationError(_("A valid partner and amount are required."))
+        open_loan_amount = session._pos_open_loan_amount(partner)
+        repayment_amount = min(amount, open_loan_amount)
+        deposit_amount = max(0.0, amount - repayment_amount)
+        return {
+            "partner_name": partner.commercial_partner_id.display_name,
+            "requested_amount": amount,
+            "open_loan_amount": open_loan_amount,
+            "repayment_amount": repayment_amount,
+            "deposit_amount": deposit_amount,
+            "has_open_loan": bool(open_loan_amount),
+        }
+
+    @api.model
     def create_customer_cash_payment(self, session_id, partner_id, payment_type, amount, reason="", settlement_type="credit_sale", partner_type="customer"):
         session = self.browse(session_id).exists()
         if not session or session.state not in ("opened", "opening_control"):
             raise UserError(_("La session du point de vente n'est plus ouverte."))
         if payment_type not in ("inbound", "outbound") or amount <= 0:
             raise ValidationError(_("Le montant du paiement doit être supérieur à zéro."))
-        if partner_type == "customer" and payment_type == "inbound" and settlement_type not in ("credit_sale", "loan_repayment", "deposit"):
+        if partner_type == "customer" and payment_type == "inbound" and settlement_type not in ("credit_sale", "loan_repayment", "loan_repayment_plus_deposit", "deposit"):
             raise ValidationError(_("Choisissez le type de règlement entrant."))
         if partner_type == "customer" and payment_type == "outbound" and settlement_type not in ("loan", "deposit_withdrawal"):
             settlement_type = "loan"
         allowed_settlements = {
             "customer": {
-                "inbound": ("credit_sale", "loan_repayment", "deposit"),
+                "inbound": ("credit_sale", "loan_repayment", "loan_repayment_plus_deposit", "deposit"),
                 "outbound": ("loan", "deposit_withdrawal"),
             },
             "supplier": {
@@ -303,6 +372,42 @@ class PosSession(models.Model):
         partner = self.env["res.partner"].browse(partner_id).exists()
         if not partner:
             raise ValidationError(_("Veuillez sélectionner un partenaire."))
+        if partner_type == "customer" and settlement_type == "loan_repayment_plus_deposit":
+            open_loan_amount = session._pos_open_loan_amount(partner)
+            if open_loan_amount and float_compare(amount, open_loan_amount, precision_rounding=session.currency_id.rounding) <= 0:
+                raise ValidationError(_(
+                    "This split requires an amount greater than the outstanding POS loan balance: %(amount)s."
+                ) % {"amount": open_loan_amount})
+            repayment = False
+            if open_loan_amount:
+                repayment = self.create_customer_cash_payment(
+                    session.id, partner.id, "inbound", open_loan_amount, reason,
+                    "loan_repayment", "customer",
+                )
+            deposit = self.create_customer_cash_payment(
+                session.id, partner.id, "inbound", amount - open_loan_amount, reason,
+                "deposit", "customer",
+            )
+            deposit.update({
+                "split_details": {
+                    "repayment_amount": open_loan_amount,
+                    "deposit_amount": amount - open_loan_amount,
+                    "repayment_number": repayment["name"] if repayment else False,
+                    "deposit_number": deposit["name"],
+                },
+                "amount": amount,
+            })
+            return deposit
+        if partner_type == "customer" and settlement_type == "loan_repayment":
+            open_loan_amount = session._pos_open_loan_amount(partner)
+            if float_compare(amount, open_loan_amount, precision_rounding=session.currency_id.rounding) > 0:
+                raise ValidationError(_("Loan repayment exceeds the outstanding POS loan balance."))
+        if partner_type == "customer" and settlement_type == "deposit_withdrawal":
+            available_deposit = session._pos_available_deposit_amount(partner)
+            if float_compare(amount, available_deposit, precision_rounding=session.currency_id.rounding) > 0:
+                raise ValidationError(_(
+                    "Withdrawal exceeds the customer's available POS deposit balance: %(amount)s."
+                ) % {"amount": available_deposit})
         journal = session.cash_journal_id
         if not journal:
             raise UserError(_("Aucun journal de caisse n'est configuré pour cette session POS."))

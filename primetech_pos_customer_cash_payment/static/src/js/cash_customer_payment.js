@@ -278,6 +278,39 @@ patch(CashMovePopup.prototype, {
             : (paymentType === "inbound"
                 ? (["credit_sale", "loan_repayment", "deposit"].includes(this.state.settlement_type) ? this.state.settlement_type : "credit_sale")
                 : (this.state.settlement_type === "deposit_withdrawal" ? "deposit_withdrawal" : "loan"));
+        if (!supplier && paymentType === "inbound" && settlementType === "loan_repayment") {
+            const preview = await this.partnerPaymentOrm.call(
+                "pos.session", "pos_loan_repayment_preview", [this.pos.session.id, partnerId, amount]
+            );
+            if (preview.deposit_amount > 0) {
+                this.dialog.add(ConfirmationDialog, {
+                    title: _t("Remboursement du prêt et dépôt du surplus"),
+                    body: _t("Le solde du prêt de %s est de %s. Le système remboursera %s sur le prêt et déposera %s sur son compte client. Ce dépôt pourra régler une prochaine facture ou être restitué au client.", preview.partner_name, this.env.utils.formatCurrency(preview.open_loan_amount), this.env.utils.formatCurrency(preview.repayment_amount), this.env.utils.formatCurrency(preview.deposit_amount)),
+                    confirmLabel: _t("Rembourser et déposer le surplus"),
+                    cancelLabel: _t("Modifier le montant"),
+                    confirm: async () => {
+                        try {
+                            const receipt = await this.pos.data.call(
+                                "pos.session", "create_customer_cash_payment",
+                                [[this.pos.session.id], partnerId, paymentType, amount, this.state.reason.trim(), "loan_repayment_plus_deposit", "customer"],
+                                {}, true
+                            );
+                            this.props.close();
+                            this.dialog.add(ConfirmationDialog, {
+                                title: _t("Paiement enregistrÃ©"),
+                                body: _t("Le remboursement et le dépôt ont été enregistrés."),
+                                confirmLabel: _t("Imprimer"), cancelLabel: _t("Non"),
+                                confirm: () => printCustomerReceiptInBrowser(this.printer, { ...receipt, cashier_name: this.pos.get_cashier()?.name || "" }, this.pos.getReceiptHeaderData()),
+                            });
+                            this.notification.add(_t("Remboursement et dépôt enregistrés."), { type: "success" });
+                        } catch (error) {
+                            this.notification.add(error.message || _t("Le paiement n'a pas pu être enregistré."), { type: "danger" });
+                        }
+                    },
+                });
+                return;
+            }
+        }
         try {
             const receipt = await this.pos.data.call(
                 "pos.session",

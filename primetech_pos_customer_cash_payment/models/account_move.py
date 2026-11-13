@@ -26,7 +26,7 @@ class AccountMove(models.Model):
                     ("pos_settlement_type", "=", "deposit"),
                     ("partner_id", "=", partner.id),
                     ("company_id", "=", move.company_id.id),
-                    ("state", "=", "posted"),
+                    ("state", "in", ("posted", "paid")),
                 ], order="date, id")
                 deposit_lines = self.env["account.move.line"]
                 used_deposits = Payment
@@ -64,7 +64,7 @@ class AccountMove(models.Model):
                 advances = Payment.search([
                     ("pos_customer_cash_payment", "=", True), ("pos_settlement_type", "=", "supplier_advance"),
                     ("partner_type", "=", "supplier"), ("partner_id", "=", partner.id),
-                    ("company_id", "=", move.company_id.id), ("state", "=", "posted"),
+                    ("company_id", "=", move.company_id.id), ("state", "in", ("posted", "paid")),
                 ], order="date, id")
                 advance_lines = self.env["account.move.line"]
                 used_advances = Payment
