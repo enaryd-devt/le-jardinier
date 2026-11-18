@@ -191,7 +191,7 @@ patch(CashMovePopup.prototype, {
         this.state.partner_id = "";
         this.state.partner_type = "customer";
         this.state.settlement_type = "credit_sale";
-        this.partnerDirectory = useState({ items: [], loading: false, search: "", open: false, offset: 0, hasMore: true });
+        this.partnerDirectory = useState({ items: [], selected: null, loading: false, search: "", open: false, offset: 0, hasMore: true });
         this.partnerSearchInput = useRef("partnerSearchInput");
         this.partnerPaymentOrm = useService("orm");
         this.onPartnerDocumentClick = this.onPartnerDocumentClick.bind(this);
@@ -202,10 +202,15 @@ patch(CashMovePopup.prototype, {
     },
     get selectedPartner() {
         const partnerId = Number(this.state.partner_id);
+        // Kept apart from the list: a later search may no longer contain it.
+        if (this.partnerDirectory.selected?.id === partnerId) return this.partnerDirectory.selected;
         return this.partnerDirectory.items.find((partner) => partner.id === partnerId);
     },
     async loadPartners(reset = false) {
-        if (this.partnerDirectory.loading || (!reset && !this.partnerDirectory.hasMore)) return;
+        // A new search always restarts, even while a previous page is loading:
+        // the answers of outdated requests are then ignored.
+        if (!reset && (this.partnerDirectory.loading || !this.partnerDirectory.hasMore)) return;
+        const sequence = (this._partnerLoadSequence = (this._partnerLoadSequence || 0) + 1);
         if (reset) {
             this.partnerDirectory.items = [];
             this.partnerDirectory.offset = 0;
@@ -217,11 +222,14 @@ patch(CashMovePopup.prototype, {
                 "pos.session", "pos_customer_payment_partners",
                 [this.pos.session.id, this.partnerDirectory.search, this.partnerDirectory.offset, 100, this.state.partner_type]
             );
+            if (sequence !== this._partnerLoadSequence) return;
             this.partnerDirectory.items.push(...result.partners);
             this.partnerDirectory.offset += result.partners.length;
             this.partnerDirectory.hasMore = result.has_more;
         } finally {
-            this.partnerDirectory.loading = false;
+            if (sequence === this._partnerLoadSequence) {
+                this.partnerDirectory.loading = false;
+            }
         }
     },
     async togglePartnerPicker() {
@@ -248,10 +256,12 @@ patch(CashMovePopup.prototype, {
     selectPartner(partner) {
         const partnerId = Number(partner.id);
         this.state.partner_id = partnerId ? String(partnerId) : "";
+        this.partnerDirectory.selected = partnerId ? partner : null;
         this.partnerDirectory.open = false;
     },
     onPartnerTypeChange() {
         this.state.partner_id = "";
+        this.partnerDirectory.selected = null;
         this.partnerDirectory.items = [];
         this.partnerDirectory.offset = 0;
         this.partnerDirectory.hasMore = true;
@@ -297,7 +307,7 @@ patch(CashMovePopup.prototype, {
                             );
                             this.props.close();
                             this.dialog.add(ConfirmationDialog, {
-                                title: _t("Paiement enregistrÃ©"),
+                                title: _t("Paiement enregistré"),
                                 body: _t("Le remboursement et le dépôt ont été enregistrés."),
                                 confirmLabel: _t("Imprimer"), cancelLabel: _t("Non"),
                                 confirm: () => printCustomerReceiptInBrowser(this.printer, { ...receipt, cashier_name: this.pos.get_cashier()?.name || "" }, this.pos.getReceiptHeaderData()),

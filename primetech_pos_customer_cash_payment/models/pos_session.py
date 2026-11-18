@@ -292,11 +292,10 @@ class PosSession(models.Model):
             return {"partners": [], "has_more": False}
         # display_name is computed/non-stored in Odoo 18 and cannot be used
         # in a SQL ORDER BY.
+        # partner_type is not used as a filter: customer_rank/supplier_rank are
+        # only set by invoices and orders, so new or imported contacts (and
+        # suppliers paid without a vendor bill) would never be offered.
         domain = [("active", "=", True)]
-        if partner_type == "customer":
-            domain.append(("customer_rank", ">", 0))
-        elif partner_type == "supplier":
-            domain.append(("supplier_rank", ">", 0))
         if search_term:
             domain += ["|", "|", "|", "|", ("name", "ilike", search_term), ("phone", "ilike", search_term), ("mobile", "ilike", search_term), ("email", "ilike", search_term), ("ref", "ilike", search_term)]
         partners = self.env["res.partner"].search(domain, order="name, id", offset=offset, limit=limit + 1)
