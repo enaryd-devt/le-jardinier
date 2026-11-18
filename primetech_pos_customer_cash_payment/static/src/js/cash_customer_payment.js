@@ -191,6 +191,11 @@ patch(CashMovePopup.prototype, {
         this.state.partner_id = "";
         this.state.partner_type = "customer";
         this.state.settlement_type = "credit_sale";
+        this.openingDebt = useState({ loading: false, journalName: "", lines: [], selectedLineIds: [] });
+        // Checkbox handlers are invoked by Owl outside the component method
+        // call path; keep their component context for the reactive state.
+        this.toggleOpeningDebt = this.toggleOpeningDebt.bind(this);
+        this.onSettlementTypeChange = this.onSettlementTypeChange.bind(this);
         this.partnerDirectory = useState({ items: [], selected: null, loading: false, search: "", open: false, offset: 0, hasMore: true });
         this.partnerSearchInput = useRef("partnerSearchInput");
         this.partnerPaymentOrm = useService("orm");
@@ -218,10 +223,13 @@ patch(CashMovePopup.prototype, {
         }
         this.partnerDirectory.loading = true;
         try {
-            const result = await this.partnerPaymentOrm.call(
-                "pos.session", "pos_customer_payment_partners",
-                [this.pos.session.id, this.partnerDirectory.search, this.partnerDirectory.offset, 100, this.state.partner_type]
-            );
+            const method = this.state.partner_type === "customer" && this.state.settlement_type === "opening_debt"
+                ? "pos_opening_debt_partners"
+                : "pos_customer_payment_partners";
+            const args = method === "pos_opening_debt_partners"
+                ? [this.pos.session.id, this.partnerDirectory.search, this.partnerDirectory.offset, 100]
+                : [this.pos.session.id, this.partnerDirectory.search, this.partnerDirectory.offset, 100, this.state.partner_type];
+            const result = await this.partnerPaymentOrm.call("pos.session", method, args);
             if (sequence !== this._partnerLoadSequence) return;
             this.partnerDirectory.items.push(...result.partners);
             this.partnerDirectory.offset += result.partners.length;
@@ -253,11 +261,14 @@ patch(CashMovePopup.prototype, {
         const target = ev.currentTarget;
         if (target.scrollTop + target.clientHeight >= target.scrollHeight - 28) await this.loadPartners();
     },
-    selectPartner(partner) {
+    async selectPartner(partner) {
         const partnerId = Number(partner.id);
         this.state.partner_id = partnerId ? String(partnerId) : "";
         this.partnerDirectory.selected = partnerId ? partner : null;
         this.partnerDirectory.open = false;
+        if (partnerId && this.state.settlement_type === "opening_debt") {
+            await this.loadOpeningDebts();
+        }
     },
     onPartnerTypeChange() {
         this.state.partner_id = "";
@@ -266,6 +277,57 @@ patch(CashMovePopup.prototype, {
         this.partnerDirectory.offset = 0;
         this.partnerDirectory.hasMore = true;
         this.state.settlement_type = this.state.partner_type === "supplier" ? "vendor_bill" : "credit_sale";
+        this.clearOpeningDebts();
+    },
+    clearOpeningDebts() {
+        this.openingDebt.journalName = "";
+        this.openingDebt.lines = [];
+        this.openingDebt.selectedLineIds = [];
+    },
+    async onSettlementTypeChange() {
+        if (this.state.settlement_type === "opening_debt" && this.hasSelectedPartner) {
+            await this.loadOpeningDebts();
+        } else {
+            this.clearOpeningDebts();
+        }
+        await this.loadPartners(true);
+    },
+    async loadOpeningDebts() {
+        const partnerId = Number(this.state.partner_id);
+        if (!partnerId) return;
+        this.openingDebt.loading = true;
+        try {
+            const result = await this.partnerPaymentOrm.call(
+                "pos.session", "pos_opening_debt_lines", [this.pos.session.id, partnerId]
+            );
+            this.openingDebt.journalName = result.journal_name;
+            this.openingDebt.lines = result.lines;
+            this.openingDebt.selectedLineIds = result.lines.map((line) => line.id);
+            this.state.amount = String(result.total || "");
+        } finally {
+            this.openingDebt.loading = false;
+        }
+    },
+    isOpeningDebtSelected(lineId) {
+        return this.openingDebt.selectedLineIds.includes(lineId);
+    },
+    toggleOpeningDebt(lineId) {
+        const ids = new Set(this.openingDebt.selectedLineIds);
+        if (ids.has(lineId)) ids.delete(lineId); else ids.add(lineId);
+        this.openingDebt.selectedLineIds = [...ids];
+        const total = this.openingDebt.lines
+            .filter((line) => ids.has(line.id))
+            .reduce((sum, line) => sum + line.residual, 0);
+        this.state.amount = String(total || "");
+    },
+    get selectedOpeningDebtTotal() {
+        const selected = new Set(this.openingDebt.selectedLineIds);
+        return this.openingDebt.lines
+            .filter((line) => selected.has(line.id))
+            .reduce((sum, line) => sum + line.residual, 0);
+    },
+    formatOpeningDebt(value) {
+        return this.env.utils.formatCurrency(value || 0);
     },
     async confirm() {
         const partnerId = Number(this.state.partner_id);
@@ -286,7 +348,7 @@ patch(CashMovePopup.prototype, {
                 ? (["vendor_refund", "supplier_advance_refund"].includes(this.state.settlement_type) ? this.state.settlement_type : "vendor_refund")
                 : (["vendor_bill", "supplier_advance"].includes(this.state.settlement_type) ? this.state.settlement_type : "vendor_bill"))
             : (paymentType === "inbound"
-                ? (["credit_sale", "loan_repayment", "deposit"].includes(this.state.settlement_type) ? this.state.settlement_type : "credit_sale")
+                ? (["credit_sale", "opening_debt", "loan_repayment", "deposit"].includes(this.state.settlement_type) ? this.state.settlement_type : "credit_sale")
                 : (this.state.settlement_type === "deposit_withdrawal" ? "deposit_withdrawal" : "loan"));
         if (!supplier && paymentType === "inbound" && settlementType === "loan_repayment") {
             const preview = await this.partnerPaymentOrm.call(
@@ -321,11 +383,31 @@ patch(CashMovePopup.prototype, {
                 return;
             }
         }
+        if (!supplier && paymentType === "inbound" && settlementType === "opening_debt" && amount > this.selectedOpeningDebtTotal) {
+            const debtAmount = this.selectedOpeningDebtTotal;
+            const depositAmount = amount - debtAmount;
+            this.dialog.add(ConfirmationDialog, {
+                title: _t("Dette d'ouverture et dépôt du reliquat"),
+                body: _t("Les dettes sélectionnées totalisent %s. Le système les réglera, puis déposera le reliquat de %s sur le compte client pour une prochaine facture ou un retrait.", this.env.utils.formatCurrency(debtAmount), this.env.utils.formatCurrency(depositAmount)),
+                confirmLabel: _t("Régler et déposer le reliquat"),
+                cancelLabel: _t("Modifier le montant"),
+                confirm: async () => {
+                    const receipt = await this.pos.data.call(
+                        "pos.session", "create_customer_cash_payment",
+                        [[this.pos.session.id], partnerId, paymentType, amount, this.state.reason.trim(), "opening_debt_plus_deposit", "customer", this.openingDebt.selectedLineIds], {}, true
+                    );
+                    this.props.close();
+                    this.notification.add(_t("Dette réglée et reliquat déposé."), { type: "success" });
+                    this.dialog.add(ConfirmationDialog, { title: _t("Paiement enregistré"), body: _t("Le règlement et le dépôt ont été enregistrés."), confirmLabel: _t("Imprimer"), cancelLabel: _t("Non"), confirm: () => printCustomerReceiptInBrowser(this.printer, { ...receipt, cashier_name: this.pos.get_cashier()?.name || "" }, this.pos.getReceiptHeaderData()) });
+                },
+            });
+            return;
+        }
         try {
             const receipt = await this.pos.data.call(
                 "pos.session",
                 "create_customer_cash_payment",
-                [[this.pos.session.id], partnerId, paymentType, amount, this.state.reason.trim(), settlementType, this.state.partner_type],
+                [[this.pos.session.id], partnerId, paymentType, amount, this.state.reason.trim(), settlementType, this.state.partner_type, this.openingDebt.selectedLineIds],
                 {}, true
             );
             this.props.close();

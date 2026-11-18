@@ -45,11 +45,30 @@
             <div class="row g-2 mb-2" t-if="state.type === 'in' and hasSelectedPartner and state.partner_type === 'customer'">
                 <div class="col">
                     <label class="form-label">Nature de l'encaissement</label>
-                    <select class="form-select" t-model="state.settlement_type">
+                    <select class="form-select" t-model="state.settlement_type" t-on-change="onSettlementTypeChange">
                         <option value="credit_sale">Règlement facture</option>
+                        <option value="opening_debt">Règlement dette d'ouverture</option>
                         <option value="loan_repayment">Remboursement prêt</option>
                         <option value="deposit">Dépôt dans le compte partenaire</option>
                     </select>
+                </div>
+            </div>
+            <div class="row g-2 mb-2" t-if="state.type === 'in' and hasSelectedPartner and state.partner_type === 'customer' and state.settlement_type === 'opening_debt'">
+                <div class="col pos-opening-debt">
+                    <div class="pos-opening-debt__heading"><span><i class="fa fa-book"/> Dettes d'ouverture à régler</span><small t-if="openingDebt.journalName" t-esc="openingDebt.journalName"/></div>
+                    <div class="pos-opening-debt__list">
+                        <div t-if="openingDebt.loading" class="pos-opening-debt__status"><i class="fa fa-spinner fa-spin"/> Chargement des dettes…</div>
+                        <div t-elif="!openingDebt.lines.length" class="pos-opening-debt__status">Ce client n'a aucune dette d'ouverture à régler. Ouvrez la liste des clients : elle ne propose que les débiteurs du journal d'ouverture.</div>
+                        <div t-else="">
+                            <label t-foreach="openingDebt.lines" t-as="line" t-key="line.id" class="pos-opening-debt__line" t-att-class="{ 'is-selected': isOpeningDebtSelected(line.id) }">
+                                <input class="pos-opening-debt__checkbox" type="checkbox" t-att-checked="isOpeningDebtSelected(line.id)" t-on-change="() => toggleOpeningDebt(line.id)"/>
+                                <span class="pos-opening-debt__document"><strong t-esc="line.reference"/><small t-esc="line.label || line.date"/></span>
+                                <strong class="pos-opening-debt__amount" t-esc="formatOpeningDebt(line.residual)"/>
+                            </label>
+                            <div class="pos-opening-debt__total"><span>Total sélectionné</span><strong t-esc="formatOpeningDebt(selectedOpeningDebtTotal)"/></div>
+                        </div>
+                    </div>
+                    <small class="pos-opening-debt__hint"><i class="fa fa-info-circle"/> Le montant peut être diminué pour un règlement partiel.</small>
                 </div>
             </div>
             <div class="row g-2 mb-2" t-if="state.type !== 'in' and hasSelectedPartner and state.partner_type === 'customer'">

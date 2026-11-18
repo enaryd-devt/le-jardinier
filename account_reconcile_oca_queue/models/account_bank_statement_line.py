@@ -10,16 +10,19 @@ class AccountBankStatementLine(models.Model):
     _inherit = "account.bank.statement.line"
 
     def _register_hook(self):
-        method = "_do_auto_reconcile"
+        # Odoo 18 performs the operation directly through
+        # ``_auto_reconcile``; the former ``_do_auto_reconcile`` hook no
+        # longer exists.
+        method = "_auto_reconcile"
         self._patch_method(
             method,
             self._patch_job_auto_delay(
-                method, context_key="auto_delay_do_auto_reconcile"
+                method, context_key="auto_delay_auto_reconcile"
             ),
         )
         return super()._register_hook()
 
-    def _do_auto_reconcile_job_options(self, models):
+    def _auto_reconcile_job_options(self, models):
         return {
             "description": self.env._(
                 "Auto reconcile %(label)s", label=self.payment_ref
@@ -29,5 +32,5 @@ class AccountBankStatementLine(models.Model):
 
     def _auto_reconcile(self):
         if self.company_id.account_auto_reconcile_queue:
-            self = self.with_context(auto_delay_do_auto_reconcile=True)
+            self = self.with_context(auto_delay_auto_reconcile=True)
         return super()._auto_reconcile()

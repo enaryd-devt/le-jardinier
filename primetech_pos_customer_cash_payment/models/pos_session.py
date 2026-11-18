@@ -147,6 +147,116 @@ class PosSession(models.Model):
             (payment_line | selected_lines).reconcile()
             payment.pos_credit_invoice_ids = [(4, invoice.id) for invoice in selected_invoices]
 
+    def _pos_opening_debt_journal(self, required=True):
+        """Return the configured opening journal for POS debt settlements.
+
+        The database currently uses OUV2.  The system parameter keeps this
+        explicit and lets accounting change the journal without a code change.
+        """
+        self.ensure_one()
+        parameter = self.env["ir.config_parameter"].sudo().get_param(
+            "primetech_pos_customer_cash_payment.opening_debt_journal_id"
+        )
+        journal = self.env["account.journal"]
+        if parameter and str(parameter).isdigit():
+            journal = journal.browse(int(parameter)).exists()
+        if not journal:
+            journal = self.env["account.journal"].search([
+                ("code", "=", "OUV2"),
+                ("company_id", "=", self.company_id.id),
+            ], limit=1)
+        if not journal and required:
+            raise UserError(_(
+                "Le journal d'ouverture des dettes clients n'est pas configuré."
+            ))
+        return journal
+
+    def _pos_opening_debt_lines(self, partner):
+        """Unreconciled customer debt lines imported in the opening journal."""
+        self.ensure_one()
+        journal = self._pos_opening_debt_journal()
+        return self.env["account.move.line"].search([
+            ("move_id.journal_id", "=", journal.id),
+            ("partner_id", "child_of", partner.commercial_partner_id.id),
+            ("company_id", "=", self.company_id.id),
+            ("parent_state", "=", "posted"),
+            ("reconciled", "=", False),
+            ("account_id.account_type", "=", "asset_receivable"),
+            ("amount_residual", ">", 0),
+        ], order="date_maturity, date, id")
+
+    def _pos_all_opening_debt_lines(self):
+        """All collectible opening balances of the session company."""
+        self.ensure_one()
+        journal = self._pos_opening_debt_journal(required=False)
+        if not journal:
+            return self.env["account.move.line"]
+        return self.env["account.move.line"].search([
+            ("move_id.journal_id", "=", journal.id),
+            ("company_id", "=", self.company_id.id),
+            ("parent_state", "=", "posted"),
+            ("reconciled", "=", False),
+            ("account_id.account_type", "=", "asset_receivable"),
+            ("amount_residual", ">", 0),
+        ])
+
+    def _reconcile_pos_opening_debt_payment(self, payment, opening_line_ids):
+        """Reconcile a POS collection with explicitly selected opening debts."""
+        self.ensure_one()
+        partner = payment.partner_id.commercial_partner_id
+        payment_line = payment.move_id.line_ids.filtered(
+            lambda line: line.account_id.account_type == "asset_receivable"
+            and line.partner_id.commercial_partner_id == partner
+            and line.amount_residual < 0
+        )[:1]
+        if not payment_line:
+            raise ValidationError(_("La ligne client du paiement POS est introuvable."))
+        debt_lines = self._pos_opening_debt_lines(partner).filtered(
+            lambda line: line.id in set(opening_line_ids)
+        )
+        if len(debt_lines) != len(set(opening_line_ids)):
+            raise ValidationError(_(
+                "Une dette sélectionnée n'est plus ouverte, ne correspond pas au client, "
+                "ou ne provient pas du journal d'ouverture. Actualisez la liste."
+            ))
+        if any(line.account_id != payment_line.account_id for line in debt_lines):
+            raise ValidationError(_(
+                "Les dettes sélectionnées ne sont pas sur le même compte client que le paiement."
+            ))
+        selected_total = sum(debt_lines.mapped("amount_residual"))
+        paid_amount = abs(payment_line.amount_residual)
+        if float_compare(paid_amount, selected_total, precision_rounding=payment.currency_id.rounding) > 0:
+            raise ValidationError(_(
+                "Le montant encaissé ne peut pas dépasser le total des dettes d'ouverture sélectionnées."
+            ))
+        # Reconciliation natively supports a partial payment on the final line.
+        (payment_line | debt_lines).reconcile()
+        payment.pos_opening_debt_line_ids = [(6, 0, debt_lines.ids)]
+
+    def _reconcile_pos_remaining_opening_debts(self, payment):
+        """Use any unreconciled incoming payment remainder on opening debts.
+
+        This is intentionally called before leaving a credit as a reusable
+        customer deposit: an opening balance must always be cleared first.
+        """
+        self.ensure_one()
+        partner = payment.partner_id.commercial_partner_id
+        payment_line = payment.move_id.line_ids.filtered(
+            lambda line: line.account_id.account_type == "asset_receivable"
+            and line.partner_id.commercial_partner_id == partner
+            and line.amount_residual < 0
+        )[:1]
+        if not payment_line:
+            return 0.0
+        debt_lines = self._pos_all_opening_debt_lines().filtered(
+            lambda line: line.partner_id.commercial_partner_id == partner
+            and line.account_id == payment_line.account_id
+        )
+        if debt_lines:
+            (payment_line | debt_lines).reconcile()
+            payment.pos_opening_debt_line_ids = [(4, line.id) for line in debt_lines]
+        return abs(payment_line.amount_residual)
+
     def _reconcile_pos_supplier_bill_payment(self, payment):
         """Apply a POS cash disbursement to the supplier's open bills."""
         self.ensure_one()
@@ -326,6 +436,59 @@ class PosSession(models.Model):
         }
 
     @api.model
+    def pos_opening_debt_lines(self, session_id, partner_id):
+        """Provide only collectible customer opening balances to the POS."""
+        session = self.browse(session_id).exists()
+        partner = self.env["res.partner"].browse(partner_id).exists()
+        if not session or session.state not in ("opened", "opening_control"):
+            raise UserError(_("La session du point de vente n'est plus ouverte."))
+        if not partner:
+            raise ValidationError(_("Veuillez sélectionner un client."))
+        lines = session._pos_opening_debt_lines(partner)
+        journal = session._pos_opening_debt_journal()
+        return {
+            "journal_name": journal.display_name,
+            "total": sum(lines.mapped("amount_residual")),
+            "lines": [{
+                "id": line.id,
+                "date": fields.Date.to_string(line.date),
+                "reference": line.move_id.name,
+                "label": line.name or line.move_id.ref or "",
+                "residual": line.amount_residual,
+            } for line in lines],
+        }
+
+    @api.model
+    def pos_opening_debt_partners(self, session_id, search_term="", offset=0, limit=100):
+        """Only customers that still have a collectible opening balance."""
+        session = self.browse(session_id).exists()
+        if not session or session.state not in ("opened", "opening_control"):
+            return {"partners": [], "has_more": False}
+        debt_partners = session._pos_all_opening_debt_lines().mapped(
+            "partner_id.commercial_partner_id"
+        )
+        domain = [("id", "in", debt_partners.ids), ("active", "=", True)]
+        if search_term:
+            domain += ["|", "|", "|", "|",
+                ("name", "ilike", search_term),
+                ("phone", "ilike", search_term),
+                ("mobile", "ilike", search_term),
+                ("email", "ilike", search_term),
+                ("ref", "ilike", search_term),
+            ]
+        limit = min(max(int(limit or 100), 1), 100)
+        offset = max(int(offset or 0), 0)
+        partners = self.env["res.partner"].search(
+            domain, order="name, id", offset=offset, limit=limit + 1,
+        )
+        return {
+            "partners": partners[:limit].read(
+                ["display_name", "name", "phone", "mobile", "email", "ref"]
+            ),
+            "has_more": len(partners) > limit,
+        }
+
+    @api.model
     def pos_loan_repayment_preview(self, session_id, partner_id, amount):
         """Prepare a transparent repayment/deposit split for the POS popup."""
         session = self.browse(session_id).exists()
@@ -346,19 +509,19 @@ class PosSession(models.Model):
         }
 
     @api.model
-    def create_customer_cash_payment(self, session_id, partner_id, payment_type, amount, reason="", settlement_type="credit_sale", partner_type="customer"):
+    def create_customer_cash_payment(self, session_id, partner_id, payment_type, amount, reason="", settlement_type="credit_sale", partner_type="customer", opening_line_ids=None):
         session = self.browse(session_id).exists()
         if not session or session.state not in ("opened", "opening_control"):
             raise UserError(_("La session du point de vente n'est plus ouverte."))
         if payment_type not in ("inbound", "outbound") or amount <= 0:
             raise ValidationError(_("Le montant du paiement doit être supérieur à zéro."))
-        if partner_type == "customer" and payment_type == "inbound" and settlement_type not in ("credit_sale", "loan_repayment", "loan_repayment_plus_deposit", "deposit"):
+        if partner_type == "customer" and payment_type == "inbound" and settlement_type not in ("credit_sale", "opening_debt", "opening_debt_plus_deposit", "loan_repayment", "loan_repayment_plus_deposit", "deposit"):
             raise ValidationError(_("Choisissez le type de règlement entrant."))
         if partner_type == "customer" and payment_type == "outbound" and settlement_type not in ("loan", "deposit_withdrawal"):
             settlement_type = "loan"
         allowed_settlements = {
             "customer": {
-                "inbound": ("credit_sale", "loan_repayment", "loan_repayment_plus_deposit", "deposit"),
+                "inbound": ("credit_sale", "opening_debt", "opening_debt_plus_deposit", "loan_repayment", "loan_repayment_plus_deposit", "deposit"),
                 "outbound": ("loan", "deposit_withdrawal"),
             },
             "supplier": {
@@ -371,6 +534,39 @@ class PosSession(models.Model):
         partner = self.env["res.partner"].browse(partner_id).exists()
         if not partner:
             raise ValidationError(_("Veuillez sélectionner un partenaire."))
+        opening_line_ids = [int(line_id) for line_id in (opening_line_ids or [])]
+        if settlement_type in ("opening_debt", "opening_debt_plus_deposit"):
+            if partner_type != "customer" or payment_type != "inbound" or not opening_line_ids:
+                raise ValidationError(_("Sélectionnez au moins une dette d'ouverture à régler."))
+            selected_lines = session._pos_opening_debt_lines(partner).filtered(
+                lambda line: line.id in set(opening_line_ids)
+            )
+            if len(selected_lines) != len(set(opening_line_ids)):
+                raise ValidationError(_("Une dette d'ouverture sélectionnée n'est plus disponible."))
+            selected_total = sum(selected_lines.mapped("amount_residual"))
+            if settlement_type == "opening_debt" and float_compare(amount, selected_total, precision_rounding=session.currency_id.rounding) > 0:
+                raise ValidationError(_("Le montant encaissé dépasse les dettes d'ouverture sélectionnées."))
+            if settlement_type == "opening_debt_plus_deposit":
+                if float_compare(amount, selected_total, precision_rounding=session.currency_id.rounding) <= 0:
+                    raise ValidationError(_("Le montant doit dépasser les dettes d'ouverture sélectionnées."))
+                debt = self.create_customer_cash_payment(
+                    session.id, partner.id, "inbound", selected_total, reason,
+                    "opening_debt", "customer", opening_line_ids,
+                )
+                deposit = self.create_customer_cash_payment(
+                    session.id, partner.id, "inbound", amount - selected_total, reason,
+                    "deposit", "customer",
+                )
+                deposit.update({
+                    "split_details": {
+                        "opening_debt_amount": selected_total,
+                        "deposit_amount": amount - selected_total,
+                        "opening_debt_number": debt["name"],
+                        "deposit_number": deposit["name"],
+                    },
+                    "amount": amount,
+                })
+                return deposit
         if partner_type == "customer" and settlement_type == "loan_repayment_plus_deposit":
             open_loan_amount = session._pos_open_loan_amount(partner)
             if open_loan_amount and float_compare(amount, open_loan_amount, precision_rounding=session.currency_id.rounding) <= 0:
@@ -452,6 +648,14 @@ class PosSession(models.Model):
                 session._reconcile_pos_loan_repayment(payment)
             elif settlement_type == "credit_sale":
                 session._reconcile_pos_credit_sale_payment(payment)
+                if session._reconcile_pos_remaining_opening_debts(payment):
+                    # The remaining credit is deliberately a deposit: it will
+                    # be auto-applied to the next invoice or can be withdrawn.
+                    payment.pos_settlement_type = "deposit"
+            elif settlement_type == "opening_debt":
+                session._reconcile_pos_opening_debt_payment(payment, opening_line_ids)
+            elif settlement_type == "deposit":
+                session._reconcile_pos_remaining_opening_debts(payment)
         elif partner_type == "customer" and settlement_type == "deposit_withdrawal":
             session._reconcile_pos_deposit_withdrawal(payment)
         elif partner_type == "supplier" and settlement_type == "vendor_bill":

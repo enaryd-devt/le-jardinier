@@ -27,11 +27,17 @@ class AccountPayment(models.Model):
         "payment_id", "move_id", string="Factures à crédit réglées",
         copy=False, readonly=True,
     )
+    pos_opening_debt_line_ids = fields.Many2many(
+        "account.move.line", "primetech_pos_opening_debt_payment_line_rel",
+        "payment_id", "move_line_id", string="Dettes d'ouverture réglées au POS",
+        copy=False, readonly=True,
+    )
     pos_settlement_type = fields.Selection(
         [
             ("loan", "Prêt partenaire"),
             ("loan_repayment", "Remboursement prêt"),
             ("credit_sale", "Règlement vente à crédit"),
+            ("opening_debt", "Règlement dette d'ouverture"),
             ("deposit", "Dépôt partenaire"),
             ("deposit_withdrawal", "Retrait de dépôt"),
             ("vendor_bill", "Règlement facture fournisseur"),

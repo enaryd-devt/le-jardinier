@@ -31,6 +31,33 @@
     &__status { padding: 13px; color: #718198; font-size: 11px; text-align: center; }
 }
 
+.pos-opening-debt {
+    margin-top: 2px;
+    overflow: hidden;
+    border: 1px solid #d7e5dc;
+    border-radius: 10px;
+    background: #fbfdfb;
+    box-shadow: 0 4px 14px rgba(20, 80, 52, .07);
+    &__heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 13px; color: #135c38; border-bottom: 1px solid #dcebe1; background: linear-gradient(135deg, #eaf7ee, #f7fcf8); font-size: 13px; font-weight: 700; }
+    &__heading i { margin-right: 6px; color: #248052; }
+    &__heading small { max-width: 48%; overflow: hidden; color: #668474; font-size: 10px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+    &__list { max-height: 220px; overflow-y: auto; background: #fff; }
+    &__line { display: flex; align-items: center; gap: 10px; min-height: 53px; margin: 0; padding: 8px 12px; border-bottom: 1px solid #edf3ef; color: #344b40; cursor: pointer; transition: background .16s ease, box-shadow .16s ease; }
+    &__line:hover { background: #f4faf6; }
+    &__line.is-selected { background: #edf8f0; box-shadow: inset 3px 0 0 #21834f; }
+    &__checkbox { width: 17px; height: 17px; margin: 0; accent-color: #1a7b48; cursor: pointer; }
+    &__document { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 2px; }
+    &__document strong { overflow: hidden; color: #284b38; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    &__document small { overflow: hidden; color: #7a9082; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    &__amount { color: #176d3f; font-size: 13px; font-weight: 800; text-align: right; white-space: nowrap; }
+    &__total { display: flex; align-items: center; justify-content: space-between; padding: 10px 13px; color: #fff; background: linear-gradient(135deg, #176b3d, #249158); box-shadow: 0 -2px 8px rgba(20, 96, 52, .15); }
+    &__total span { font-size: 11px; font-weight: 600; }
+    &__total strong { font-size: 15px; font-weight: 800; }
+    &__status { padding: 18px 14px; color: #6f8577; font-size: 12px; line-height: 1.45; text-align: center; }
+    &__hint { display: block; padding: 8px 12px; color: #688273; background: #f5faf6; border-top: 1px solid #e1eee5; font-size: 10px; }
+    &__hint i { margin-right: 4px; color: #338b59; }
+}
+
 // The cash-move dialog is a Bootstrap modal.  Its content/body must not clip
 // the partner directory: the latter deliberately opens above the form fields.
 .o_dialog:has(.pos-customer-cash-partner-selector) {
@@ -82,6 +109,10 @@
     .customer-cash-payments__date, .customer-cash-payments__table th:first-child { display: none; }
     .customer-cash-payments__print span { display: none; }
     .customer-cash-payments__print i { margin: 0; }
+    .pos-opening-debt__heading { padding: 9px 10px; }
+    .pos-opening-debt__line { padding: 8px 10px; }
+    .pos-opening-debt__amount { font-size: 12px; }
+    .pos-opening-debt__heading small { max-width: 42%; }
 }
 
 // Printed in the browser by the customer-payment receipt action.
