@@ -192,6 +192,7 @@ patch(CashMovePopup.prototype, {
         this.state.partner_type = "customer";
         this.state.settlement_type = "credit_sale";
         this.openingDebt = useState({ loading: false, journalName: "", lines: [], selectedLineIds: [] });
+        this.partnerSituation = useState({ loading: false, amount: 0, label: "", direction: "" });
         // Checkbox handlers are invoked by Owl outside the component method
         // call path; keep their component context for the reactive state.
         this.toggleOpeningDebt = this.toggleOpeningDebt.bind(this);
@@ -266,6 +267,25 @@ patch(CashMovePopup.prototype, {
         this.state.partner_id = partnerId ? String(partnerId) : "";
         this.partnerDirectory.selected = partnerId ? partner : null;
         this.partnerDirectory.open = false;
+        this.partnerSituation.loading = false;
+        this.partnerSituation.amount = 0;
+        this.partnerSituation.label = "";
+        this.partnerSituation.direction = "";
+        if (partnerId) {
+            this.partnerSituation.loading = true;
+            try {
+                const situation = await this.partnerPaymentOrm.call(
+                    "pos.session",
+                    "pos_partner_global_balance",
+                    [this.pos.session.id, partnerId]
+                );
+                this.partnerSituation.amount = situation.amount || 0;
+                this.partnerSituation.label = situation.direction || "";
+                this.partnerSituation.direction = situation.direction_code || "";
+            } finally {
+                this.partnerSituation.loading = false;
+            }
+        }
         if (partnerId && this.state.settlement_type === "opening_debt") {
             await this.loadOpeningDebts();
         }
@@ -278,6 +298,10 @@ patch(CashMovePopup.prototype, {
         this.partnerDirectory.hasMore = true;
         this.state.settlement_type = this.state.partner_type === "supplier" ? "vendor_bill" : "credit_sale";
         this.clearOpeningDebts();
+        this.partnerSituation.loading = false;
+        this.partnerSituation.amount = 0;
+        this.partnerSituation.label = "";
+        this.partnerSituation.direction = "";
     },
     clearOpeningDebts() {
         this.openingDebt.journalName = "";

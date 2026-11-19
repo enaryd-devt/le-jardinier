@@ -31,6 +31,22 @@
     &__status { padding: 13px; color: #718198; font-size: 11px; text-align: center; }
 }
 
+.pos-partner-situation {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: -3px 2px 7px;
+    color: #728194;
+    font-size: 10px;
+    line-height: 1.2;
+
+    > i { color: #8294aa; font-size: 10px; }
+    strong { color: #53677f; font-size: 11px; font-weight: 700; }
+    &.is-debtor > i, &.is-debtor strong { color: #a9651d; }
+    &.is-creditor > i, &.is-creditor strong { color: #276c9b; }
+    &.is-settled > i, &.is-settled strong { color: #28744c; }
+}
+
 .pos-opening-debt {
     margin-top: 2px;
     overflow: hidden;

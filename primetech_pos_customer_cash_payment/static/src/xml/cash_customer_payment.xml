@@ -37,6 +37,11 @@
                 </div>
             </div>
         </div>
+        <div t-if="hasSelectedPartner" class="pos-partner-situation" t-att-class="{ 'is-debtor': partnerSituation.direction === 'partner_owes', 'is-creditor': partnerSituation.direction === 'company_owes', 'is-settled': partnerSituation.direction === 'settled' }">
+            <i t-att-class="{ 'fa': true, 'fa-spinner': partnerSituation.loading, 'fa-spin': partnerSituation.loading, 'fa-balance-scale': !partnerSituation.loading }"/>
+            <span t-if="partnerSituation.loading">Calcul de la situation&#8230;</span>
+            <span t-else=""><t t-esc="partnerSituation.label"/> : <strong t-esc="formatOpeningDebt(partnerSituation.amount)"/></span>
+        </div>
         </t>
     </t>
 
